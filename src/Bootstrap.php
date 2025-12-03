@@ -17,7 +17,7 @@
  * @license   GNU General Public License 3
  */
 
-namespace OpenCoreEMR\Modules\YourModuleName;
+namespace {VendorName}\Modules\{ModuleName};
 
 use OpenEMR\Common\Logging\SystemLogger;
 use OpenEMR\Common\Twig\TwigContainer;
@@ -29,7 +29,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Bootstrap
 {
-    public const MODULE_NAME = "oce-module-yourmodulename";
+    public const MODULE_NAME = "{vendor-prefix}-module-{modulename}";
 
     private readonly GlobalConfig $globalsConfig;
     private readonly \Twig\Environment $twig;

@@ -18,47 +18,71 @@ This is a template repository for creating OpenEMR modules using OpenCoreEMR's a
 Click "Use this template" on GitHub or clone this repository:
 
 ```bash
-git clone https://github.com/opencoreemr/oce-module-template.git oce-module-yourmodulename
-cd oce-module-yourmodulename
+git clone https://github.com/opencoreemr/oce-module-template.git {vendor-prefix}-module-{modulename}
+cd {vendor-prefix}-module-{modulename}
 rm -rf .git
 git init
 ```
 
-### 2. Update Module Metadata
-
-Edit the following files to replace placeholders with your module details:
-
-#### `composer.json`
-- Replace `{yourmodulename}` with your module name (e.g., `sinch-fax`, `lab-integration`)
-- Update `description`, `keywords`, and `authors`
-- Update GitHub URLs in `support` section
-- Update namespace in `autoload.psr-4` (e.g., `YourModuleName`)
-
-#### `version.php`
-- Update the header comment with your module name and description
-
-#### `phpcs.xml`
-- Update the `<ruleset name="">` to match your module
-
-### 3. Install Dependencies
+### 2. Install Dependencies
 
 ```bash
 composer install
 ```
 
-### 4. Set Up Pre-Commit Hooks
+### 3. Run the Setup Wizard (Recommended)
+
+The automated setup wizard will configure your module:
+
+```bash
+./bin/setup
+```
+
+This interactive wizard will:
+- Ask if this is for internal OpenCoreEMR use (oce- prefix) or external/community use (oe- prefix)
+- Prompt for your module name
+- Ask for vendor name (if external use)
+- Replace all placeholders throughout the codebase
+- Optionally remove setup files when complete
+
+**For OpenCoreEMR Internal Use:**
+- Namespace: `OpenCoreEMR\Modules\{ModuleName}`
+- Package: `opencoreemr/oce-module-{modulename}`
+
+**For External/Community Use:**
+- Namespace: `YourVendor\Modules\{ModuleName}` (or `OpenEMR\Modules\{ModuleName}`)
+- Package: `yourvendor/oe-module-{modulename}`
+
+### 4. Manual Setup (Alternative)
+
+If you prefer manual setup, edit these files to replace placeholders:
+
+#### `composer.json`
+- Replace `{VendorName}` with your vendor name (e.g., `OpenCoreEMR` or `YourOrg`)
+- Replace `{vendor-prefix}` with `oce` (internal) or `oe` (external)
+- Replace `{modulename}` with your module name (e.g., `lab-integration`)
+- Replace `{ModuleName}` with PascalCase version (e.g., `LabIntegration`)
+- Update `description`, `keywords`, and `authors`
+
+#### Other files with placeholders:
+- `version.php` - Update header comments
+- `phpcs.xml` - Update ruleset name
+- `src/` files - Update namespaces
+- `.composer-require-checker.json` - Update symbol whitelist
+
+### 5. Set Up Pre-Commit Hooks
 
 ```bash
 pip install pre-commit
 pre-commit install
 ```
 
-### 5. Create Your Module Structure
+### 6. Create Your Module Structure
 
 Follow the structure outlined in `CLAUDE.md`:
 
 ```
-oce-module-yourname/
+{vendor-prefix}-module-{modulename}/
 ├── public/
 │   └── index.php          # Main entry point
 ├── src/
@@ -72,7 +96,7 @@ oce-module-yourname/
 └── openemr.bootstrap.php # Module loader
 ```
 
-### 6. Read the Documentation
+### 7. Read the Documentation
 
 - **`CLAUDE.md`** - Comprehensive architectural patterns and conventions for AI agents
 - **`DEVELOPMENT.md`** - Development workflow and guidelines (update this for your module)
@@ -98,7 +122,7 @@ public function dispatch(string $action, array $params): Response
 <?php
 require_once __DIR__ . '/../../../../globals.php';
 
-use OpenCoreEMR\Modules\{YourModule}\Bootstrap;
+use {VendorName}\Modules\{ModuleName}\Bootstrap;
 
 $kernel = $GLOBALS['kernel'];
 $bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel);
@@ -112,12 +136,12 @@ $response->send();
 ### Custom Exceptions with Status Codes
 
 ```php
-interface YourModuleExceptionInterface extends \Throwable
+interface {ModuleName}ExceptionInterface extends \Throwable
 {
     public function getStatusCode(): int;
 }
 
-class YourModuleNotFoundException extends YourModuleException
+class {ModuleName}NotFoundException extends {ModuleName}Exception
 {
     public function getStatusCode(): int
     {
@@ -150,18 +174,18 @@ composer rector     # PHP compatibility
 
 ```bash
 cd /path/to/openemr
-composer require opencoreemr/oce-module-yourmodulename
+composer require {vendorname}/{vendor-prefix}-module-{modulename}
 ```
 
 ### Manual Installation
 
-1. Copy to `interface/modules/custom_modules/oce-module-yourmodulename`
+1. Copy to `interface/modules/custom_modules/{vendor-prefix}-module-{modulename}`
 2. Navigate to **Administration > Modules > Manage Modules**
 3. Click **Register**, then **Install**, then **Enable**
 
 ## Support
 
-- Issues: https://github.com/opencoreemr/oce-module-{yourmodulename}/issues
+- Issues: https://github.com/{vendorname}/{vendor-prefix}-module-{modulename}/issues
 - Email: support@opencoreemr.com
 
 ## License

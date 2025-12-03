@@ -16,7 +16,7 @@
  * @license   GNU General Public License 3
  */
 
-namespace OpenCoreEMR\Modules\YourModuleName;
+namespace {VendorName}\Modules\{ModuleName};
 
 /**
  * Provides centralized access to OpenEMR globals.

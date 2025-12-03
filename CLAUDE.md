@@ -5,33 +5,72 @@ This document describes the architectural patterns and conventions for OpenEMR m
 ## About This Template
 
 **This is a template repository.** When creating a new module:
-1. Copy this entire repository
-2. Replace all placeholder values (`{yourmodulename}`, `YourModuleName`, etc.) with your actual module name
+
+### Quick Start (Recommended)
+1. Copy this repository
+2. Run `composer install`
+3. Run `./bin/setup` - Interactive wizard that:
+   - Asks if internal (OpenCoreEMR/oce-) or external (community/oe-)
+   - Prompts for module name
+   - Replaces all placeholders automatically
+   - Optionally removes setup files when done
+4. Start building your module
+5. See `GETTING_STARTED.md` for detailed checklist
+
+### Manual Setup (Alternative)
+1. Copy this repository
+2. Replace placeholder values throughout the codebase (see Placeholder Reference below)
 3. Update `composer.json`, `version.php`, `phpcs.xml`, and documentation files
-4. Create your `src/`, `public/`, and `templates/` directories following the patterns below
-5. See `GETTING_STARTED.md` for a step-by-step checklist
+4. See `GETTING_STARTED.md` for step-by-step checklist
 
 **For AI agents:** When a user asks you to "create a new OpenEMR module" or work on module code, you should follow the patterns documented here. If working on an existing module, verify it follows these patterns and refactor if necessary to maintain consistency.
+
+## Placeholder Reference
+
+This template uses the following placeholders that should be replaced when creating a new module:
+
+| Placeholder | Description | Internal Example | External Example |
+|-------------|-------------|------------------|------------------|
+| `{VendorName}` | Vendor name (PascalCase) | `OpenCoreEMR` | `MyOrg` or `OpenEMR` |
+| `{vendorname}` | Vendor name (lowercase) | `opencoreemr` | `myorg` or `openemr` |
+| `{vendor-prefix}` | Module prefix | `oce` | `oe` |
+| `{modulename}` | Module name (lowercase-with-hyphens) | `lab-integration` | `lab-integration` |
+| `{ModuleName}` | Module name (PascalCase) | `LabIntegration` | `LabIntegration` |
+
+**Usage Examples:**
+
+**For OpenCoreEMR Internal Use:**
+- Repository: `oce-module-lab-integration`
+- Package: `opencoreemr/oce-module-lab-integration`
+- Namespace: `OpenCoreEMR\Modules\LabIntegration`
+- Module ID: `oce-module-lab-integration`
+
+**For External/Community Use:**
+- Repository: `oe-module-lab-integration`
+- Package: `myorg/oe-module-lab-integration` or `openemr/oe-module-lab-integration`
+- Namespace: `MyOrg\Modules\LabIntegration` or `OpenEMR\Modules\LabIntegration`
+- Module ID: `oe-module-lab-integration`
 
 ## Naming Conventions
 
 When creating a new module from this template, use consistent naming:
 
-| Context | Format | Example |
-|---------|--------|---------|
-| Repository name | `oce-module-{name}` | `oce-module-lab-integration` |
-| Composer package | `opencoreemr/oce-module-{name}` | `opencoreemr/oce-module-lab-integration` |
-| Namespace | `OpenCoreEMR\Modules\{PascalCase}` | `OpenCoreEMR\Modules\LabIntegration` |
-| Exception prefix | `{PascalCase}Exception` | `LabIntegrationNotFoundException` |
-| Bootstrap constant | `oce-module-{name}` | `oce-module-lab-integration` |
-| File names | PascalCase for classes | `LabResultController.php` |
-| Directory names | lowercase | `lab-results/` |
+| Context | Format | Internal Example | External Example |
+|---------|--------|------------------|------------------|
+| Repository name | `{vendor-prefix}-module-{name}` | `oce-module-lab-integration` | `oe-module-lab-integration` |
+| Composer package | `{vendorname}/{vendor-prefix}-module-{name}` | `opencoreemr/oce-module-lab-integration` | `openemr/oe-module-lab-integration` |
+| Namespace | `{VendorName}\Modules\{PascalCase}` | `OpenCoreEMR\Modules\LabIntegration` | `OpenEMR\Modules\LabIntegration` |
+| Exception prefix | `{PascalCase}Exception` | `LabIntegrationNotFoundException` | `LabIntegrationNotFoundException` |
+| Bootstrap constant | `{vendor-prefix}-module-{name}` | `oce-module-lab-integration` | `oe-module-lab-integration` |
+| File names | PascalCase for classes | `LabResultController.php` | `LabResultController.php` |
+| Directory names | lowercase | `lab-results/` | `lab-results/` |
 
 **Module name rules:**
 - Use lowercase with hyphens for repositories and URLs
 - Use PascalCase for PHP namespaces and class names
 - Keep names concise but descriptive
 - Avoid redundant words like "openemr" or "module" in the functional name
+- Internal modules use `oce-` prefix, external/community modules use `oe-` prefix
 
 ## Module Architecture Overview
 
@@ -44,13 +83,18 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 ## File Structure Convention
 
 ```
-oce-module-{name}/
+{vendor-prefix}-module-{modulename}/
+├── bin/
+│   └── setup              # Setup wizard (removed after initial setup)
 ├── public/
 │   ├── index.php          # Main entry point (25-35 lines)
 │   ├── {feature}.php      # Feature entry points (25-35 lines)
 │   └── assets/            # Static assets (CSS, JS, images)
 ├── src/
 │   ├── Bootstrap.php      # Module initialization and DI
+│   ├── GlobalsAccessor.php # Globals access wrapper
+│   ├── Command/           # Console commands (removed after setup)
+│   │   └── SetupCommand.php
 │   ├── Controller/        # Request handlers
 │   │   ├── {Feature}Controller.php
 │   │   └── ...
@@ -58,16 +102,17 @@ oce-module-{name}/
 │   │   ├── {Feature}Service.php
 │   │   └── ...
 │   ├── Exception/         # Custom exception types
-│   │   ├── {Module}ExceptionInterface.php
-│   │   ├── {Module}Exception.php
+│   │   ├── {ModuleName}ExceptionInterface.php
+│   │   ├── {ModuleName}Exception.php
 │   │   └── {Specific}Exception.php
-│   └── GlobalConfig.php   # Configuration wrapper
+│   └── GlobalConfig.php   # Configuration wrapper (you create this)
 ├── templates/
 │   └── {feature}/
 │       ├── {view}.html.twig
 │       └── partials/
 │           └── _{component}.html.twig
-└── composer.json
+├── composer.json
+└── openemr.bootstrap.php  # Module loader
 ```
 
 ## Public Entry Point Pattern
@@ -88,7 +133,7 @@ Public PHP files should be short! Just dispatch a controller and send a response
 
 require_once __DIR__ . '/../../../../globals.php';
 
-use OpenCoreEMR\Modules\{ModuleName}\Bootstrap;
+use {VendorName}\Modules\{ModuleName}\Bootstrap;
 
 // Get kernel and bootstrap module
 $kernel = $GLOBALS['kernel'];
@@ -117,13 +162,13 @@ Controllers should:
 ```php
 <?php
 
-namespace OpenCoreEMR\Modules\{ModuleName}\Controller;
+namespace {VendorName}\Modules\{ModuleName}\Controller;
 
-use OpenCoreEMR\Modules\{ModuleName}\Exception\{Module}AccessDeniedException;
-use OpenCoreEMR\Modules\{ModuleName}\Exception\{Module}NotFoundException;
-use OpenCoreEMR\Modules\{ModuleName}\Exception\{Module}ValidationException;
-use OpenCoreEMR\Modules\{ModuleName}\GlobalConfig;
-use OpenCoreEMR\Modules\{ModuleName}\Service\{Feature}Service;
+use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}AccessDeniedException;
+use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}NotFoundException;
+use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}ValidationException;
+use {VendorName}\Modules\{ModuleName}\GlobalConfig;
+use {VendorName}\Modules\{ModuleName}\Service\{Feature}Service;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\SystemLogger;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -179,12 +224,12 @@ class {Feature}Controller
     {
         // Validate CSRF
         if (!CsrfUtils::verifyCsrfToken($params['csrf_token'] ?? '')) {
-            throw new {Module}AccessDeniedException("CSRF token verification failed");
+            throw new {ModuleName}AccessDeniedException("CSRF token verification failed");
         }
 
         // Validate input
         if (empty($params['required_field'])) {
-            throw new {Module}ValidationException("Required field is missing");
+            throw new {ModuleName}ValidationException("Required field is missing");
         }
 
         // Process request
@@ -193,7 +238,7 @@ class {Feature}Controller
             return new RedirectResponse($_SERVER['PHP_SELF']);
         } catch (\Exception $e) {
             $this->logger->error("Error creating item: " . $e->getMessage());
-            throw new {Module}Exception("Error creating item: " . $e->getMessage());
+            throw new {ModuleName}Exception("Error creating item: " . $e->getMessage());
         }
     }
 }
@@ -207,11 +252,11 @@ All modules should have their own exception types in `src/Exception/`:
 
 ```php
 <?php
-// src/Exception/{Module}ExceptionInterface.php
+// src/Exception/{ModuleName}ExceptionInterface.php
 
-namespace OpenCoreEMR\Modules\{ModuleName}\Exception;
+namespace {VendorName}\Modules\{ModuleName}\Exception;
 
-interface {Module}ExceptionInterface extends \Throwable
+interface {ModuleName}ExceptionInterface extends \Throwable
 {
     /**
      * Get the HTTP status code for this exception
@@ -222,11 +267,11 @@ interface {Module}ExceptionInterface extends \Throwable
 
 ```php
 <?php
-// src/Exception/{Module}Exception.php
+// src/Exception/{ModuleName}Exception.php
 
-namespace OpenCoreEMR\Modules\{ModuleName}\Exception;
+namespace {VendorName}\Modules\{ModuleName}\Exception;
 
-abstract class {Module}Exception extends \RuntimeException implements {Module}ExceptionInterface
+abstract class {ModuleName}Exception extends \RuntimeException implements {ModuleName}ExceptionInterface
 {
     abstract public function getStatusCode(): int;
 }
@@ -234,11 +279,11 @@ abstract class {Module}Exception extends \RuntimeException implements {Module}Ex
 
 ```php
 <?php
-// src/Exception/{Module}NotFoundException.php
+// src/Exception/{ModuleName}NotFoundException.php
 
-namespace OpenCoreEMR\Modules\{ModuleName}\Exception;
+namespace {VendorName}\Modules\{ModuleName}\Exception;
 
-class {Module}NotFoundException extends {Module}Exception
+class {ModuleName}NotFoundException extends {ModuleName}Exception
 {
     public function getStatusCode(): int
     {
@@ -249,11 +294,11 @@ class {Module}NotFoundException extends {Module}Exception
 
 ### Common Exception Types to Implement
 
-- `{Module}NotFoundException` (404) - Resource not found
-- `{Module}UnauthorizedException` (401) - User not authenticated
-- `{Module}AccessDeniedException` (403) - CSRF failed, insufficient permissions
-- `{Module}ValidationException` (400) - Invalid input data
-- `{Module}ConfigurationException` (500) - Configuration errors
+- `{ModuleName}NotFoundException` (404) - Resource not found
+- `{ModuleName}UnauthorizedException` (401) - User not authenticated
+- `{ModuleName}AccessDeniedException` (403) - CSRF failed, insufficient permissions
+- `{ModuleName}ValidationException` (400) - Invalid input data
+- `{ModuleName}ConfigurationException` (500) - Configuration errors
 
 ### Exception Handling in Public Files
 
@@ -261,7 +306,7 @@ class {Module}NotFoundException extends {Module}Exception
 try {
     $response = $controller->dispatch($action, $_REQUEST);
     $response->send();
-} catch ({Module}ExceptionInterface $e) {
+} catch ({ModuleName}ExceptionInterface $e) {
     error_log("Error: " . $e->getMessage());
 
     $response = new Response(
@@ -326,16 +371,16 @@ The `Bootstrap.php` class should provide factory methods for controllers:
 ```php
 <?php
 
-namespace OpenCoreEMR\Modules\{ModuleName};
+namespace {VendorName}\Modules\{ModuleName};
 
-use OpenCoreEMR\Modules\{ModuleName}\Controller\{Feature}Controller;
-use OpenCoreEMR\Modules\{ModuleName}\Service\{Feature}Service;
+use {VendorName}\Modules\{ModuleName}\Controller\{Feature}Controller;
+use {VendorName}\Modules\{ModuleName}\Service\{Feature}Service;
 use OpenEMR\Core\Kernel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class Bootstrap
 {
-    public const MODULE_NAME = "oce-module-{name}";
+    public const MODULE_NAME = "{vendor-prefix}-module-{modulename}";
 
     private readonly GlobalConfig $globalsConfig;
     private readonly \Twig\Environment $twig;

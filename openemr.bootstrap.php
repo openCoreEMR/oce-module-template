@@ -13,13 +13,13 @@
  * @license   GNU General Public License 3
  */
 
-namespace OpenCoreEMR\Modules\YourModuleName;
+namespace {VendorName}\Modules\{ModuleName};
 
 /**
  * @var \OpenEMR\Core\ModulesClassLoader $classLoader Injected by the OpenEMR module loader
  */
 $classLoader->registerNamespaceIfNotExists(
-    'OpenCoreEMR\\Modules\\YourModuleName\\',
+    '{VendorName}\\Modules\\{ModuleName}\\',
     __DIR__ . DIRECTORY_SEPARATOR . 'src'
 );
 
