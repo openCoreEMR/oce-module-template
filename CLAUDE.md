@@ -2,6 +2,37 @@
 
 This document describes the architectural patterns and conventions for OpenEMR modules developed by OpenCoreEMR. Follow these patterns when working on **any** OpenEMR module in this organization.
 
+## About This Template
+
+**This is a template repository.** When creating a new module:
+1. Copy this entire repository
+2. Replace all placeholder values (`{yourmodulename}`, `YourModuleName`, etc.) with your actual module name
+3. Update `composer.json`, `version.php`, `phpcs.xml`, and documentation files
+4. Create your `src/`, `public/`, and `templates/` directories following the patterns below
+5. See `GETTING_STARTED.md` for a step-by-step checklist
+
+**For AI agents:** When a user asks you to "create a new OpenEMR module" or work on module code, you should follow the patterns documented here. If working on an existing module, verify it follows these patterns and refactor if necessary to maintain consistency.
+
+## Naming Conventions
+
+When creating a new module from this template, use consistent naming:
+
+| Context | Format | Example |
+|---------|--------|---------|
+| Repository name | `oce-module-{name}` | `oce-module-lab-integration` |
+| Composer package | `opencoreemr/oce-module-{name}` | `opencoreemr/oce-module-lab-integration` |
+| Namespace | `OpenCoreEMR\Modules\{PascalCase}` | `OpenCoreEMR\Modules\LabIntegration` |
+| Exception prefix | `{PascalCase}Exception` | `LabIntegrationNotFoundException` |
+| Bootstrap constant | `oce-module-{name}` | `oce-module-lab-integration` |
+| File names | PascalCase for classes | `LabResultController.php` |
+| Directory names | lowercase | `lab-results/` |
+
+**Module name rules:**
+- Use lowercase with hyphens for repositories and URLs
+- Use PascalCase for PHP namespaces and class names
+- Keep names concise but descriptive
+- Avoid redundant words like "openemr" or "module" in the functional name
+
 ## Module Architecture Overview
 
 OpenEMR modules follow a **Symfony-inspired MVC architecture** with:

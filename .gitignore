@@ -13,5 +13,4 @@ composer.lock
 Thumbs.db
 
 # Module specific
-/fax_files/
 *.log

@@ -42,7 +42,8 @@
     "xlj",
     "attr",
     "text",
-    "date"
+    "date",
+    "OpenCoreEMR\\Modules\\YourModuleName\\GlobalConfig"
   ],
   "php-core-extensions": [
     "Core",

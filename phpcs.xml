@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ruleset name="OpenEMR Sinch Fax Module">
-    <description>PHP CodeSniffer configuration for OpenEMR Sinch Fax Module</description>
+<ruleset name="OpenEMR Module Template">
+    <description>PHP CodeSniffer configuration for OpenEMR modules</description>
 
     <!-- Files to check -->
     <file>src</file>

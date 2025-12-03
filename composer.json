@@ -1,20 +1,17 @@
 {
-  "name": "opencoreemr/oce-module-sinch-fax",
-  "description": "OpenEMR Sinch Fax integration module for secure fax sending and receiving, by OpenCoreEMR Inc",
+  "name": "opencoreemr/oce-module-template",
+  "description": "Template repository for creating OpenEMR modules with Symfony-inspired MVC architecture",
   "license": "GPL-3.0-or-later",
   "type": "openemr-module",
   "keywords": [
     "openemr",
     "module",
-    "fax",
-    "sinch",
-    "healthcare",
-    "hipaa"
+    "healthcare"
   ],
   "authors": [
     {
-      "name": "Michael A. Smith",
-      "email": "michael@opencoreemr.com",
+      "name": "Your Name",
+      "email": "your.email@opencoreemr.com",
       "homepage": "https://opencoreemr.com",
       "role": "Developer"
     }
@@ -22,15 +19,12 @@
   "homepage": "https://opencoreemr.com",
   "support": {
     "email": "support@opencoreemr.com",
-    "issues": "https://github.com/opencoreemr/oce-module-sinch-fax/issues",
-    "source": "https://github.com/opencoreemr/oce-module-sinch-fax"
+    "issues": "https://github.com/opencoreemr/oce-module-template/issues",
+    "source": "https://github.com/opencoreemr/oce-module-template"
   },
   "require": {
     "php": ">=8.2",
-    "ext-curl": "*",
     "ext-filter": "*",
-    "ext-json": "*",
-    "guzzlehttp/guzzle": "^7.0",
     "openemr/oe-module-installer-plugin": "^0.1.5",
     "symfony/event-dispatcher": "^6.0 || ^7.0",
     "symfony/http-foundation": "^6.0 || ^7.0",
@@ -47,7 +41,7 @@
   "prefer-stable": true,
   "autoload": {
     "psr-4": {
-      "OpenCoreEMR\\Modules\\SinchFax\\": "src/"
+      "OpenCoreEMR\\Modules\\YourModuleName\\": "src/"
     }
   },
   "config": {
@@ -57,15 +51,15 @@
     }
   },
   "extra": {
-    "oe-module-name": "oce-module-sinch-fax"
+    "oe-module-name": "oce-module-template"
   },
   "scripts": {
     "post-install-cmd": [
-      "echo 'OpenCoreEMR Sinch Fax Module installed successfully!'",
+      "echo 'OpenCoreEMR Module installed successfully!'",
       "echo 'Please go to Administration > Modules > Manage Modules to register and enable the module.'"
     ],
     "post-update-cmd": [
-      "echo 'OpenCoreEMR Sinch Fax Module updated successfully!'"
+      "echo 'OpenCoreEMR Module updated successfully!'"
     ],
     "code-quality": [
       "@phpcs",

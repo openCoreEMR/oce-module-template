@@ -1,11 +1,14 @@
 <?php
 
 /**
- * Package version data for the OpenCoreEmr Sinch Fax Module
+ * Package version data for OpenEMR modules
+ *
+ * This file automatically determines version from git tags or uses the default version.
+ * Update the default version values when creating a new module from this template.
  *
  * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
- * @author    Michael A. Smith <michael@opencoreemr.com>
+ * @author    Your Name <your.email@opencoreemr.com>
  * @copyright Copyright (c) 2025 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
