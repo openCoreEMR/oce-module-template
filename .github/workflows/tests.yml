@@ -10,6 +10,7 @@ on:
 
 jobs:
   test:
+    if: ${{ !github.event.repository.is_template }}
     name: PHP ${{ matrix.php-version }} Tests
     runs-on: ubuntu-latest
 

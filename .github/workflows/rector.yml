@@ -10,6 +10,7 @@ on:
 
 jobs:
   rector:
+    if: ${{ !github.event.repository.is_template }}
     name: Run Rector (dry-run)
     runs-on: ubuntu-latest
 

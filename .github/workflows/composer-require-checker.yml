@@ -10,6 +10,7 @@ on:
 
 jobs:
   composer-require-checker:
+    if: ${{ !github.event.repository.is_template }}
     name: Run Composer Require Checker
     runs-on: ubuntu-latest
 

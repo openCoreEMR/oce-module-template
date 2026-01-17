@@ -10,6 +10,7 @@ on:
 
 jobs:
   phpcs:
+    if: ${{ !github.event.repository.is_template }}
     name: Run PHP CodeSniffer
     runs-on: ubuntu-latest
 
