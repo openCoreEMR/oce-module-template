@@ -1,5 +1,5 @@
 parameters:
-    level: 8
+    level: 10
     paths:
         - src
         - public
@@ -22,12 +22,27 @@ parameters:
     reportAlwaysTrueInLastCondition: true
 
     # Ignore missing OpenEMR classes during static analysis
+    # reportUnmatched: false allows CI to pass when OpenEMR IS installed
     ignoreErrors:
-        - '#Function (xlt|xla|xlj|text|attr|sqlStatement|sqlQuery|sqlFetchArray) not found#'
-        - '#unknown class OpenEMR\\#'
-        - '#Instantiated class OpenEMR\\#'
-        - '#invalid type OpenEMR\\#'
-        - '#Property .+ is never read, only written#'
+        -
+            message: '#Function (xlt|xla|xlj|text|attr|sqlStatement|sqlQuery|sqlFetchArray) not found#'
+            reportUnmatched: false
+        -
+            message: '#unknown class OpenEMR\\#'
+            reportUnmatched: false
+        -
+            message: '#Instantiated class OpenEMR\\#'
+            reportUnmatched: false
+        -
+            message: '#invalid type OpenEMR\\#'
+            reportUnmatched: false
+        -
+            message: '#Property .+ is never read, only written#'
+            reportUnmatched: false
         # Ignore template placeholder classes that don't exist yet (GlobalConfig, Controllers, Services)
-        - '#unknown class OpenCoreEMR\\Modules\\YourModuleName\\GlobalConfig#'
-        - '#Instantiated class OpenCoreEMR\\Modules\\YourModuleName\\GlobalConfig not found#'
+        -
+            message: '#unknown class OpenCoreEMR\\Modules\\YourModuleName\\GlobalConfig#'
+            reportUnmatched: false
+        -
+            message: '#Instantiated class OpenCoreEMR\\Modules\\YourModuleName\\GlobalConfig not found#'
+            reportUnmatched: false
