@@ -14,3 +14,15 @@ Thumbs.db
 
 # Module specific
 *.log
+
+# Testing
+/htmlcov/
+.phpunit.cache/
+.phpunit.result.cache
+
+# Docker
+.docker/
+compose.override.yml
+
+# Environment files with secrets
+.env.testing

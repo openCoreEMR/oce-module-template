@@ -10,12 +10,13 @@ on:
 
 jobs:
   composer-validate:
+    if: ${{ !github.event.repository.is_template }}
     name: Validate composer.json
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2

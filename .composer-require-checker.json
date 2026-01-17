@@ -16,12 +16,16 @@
     "void",
     "object",
     "Document",
+    "OpenEMR\\Common\\Auth\\AuthGlobal",
+    "OpenEMR\\Common\\Auth\\AuthHash",
     "OpenEMR\\Common\\Csrf\\CsrfUtils",
     "OpenEMR\\Common\\Crypto\\CryptoGen",
     "OpenEMR\\Common\\Database\\QueryUtils",
     "OpenEMR\\Common\\Logging\\SystemLogger",
     "OpenEMR\\Common\\Twig\\TwigContainer",
     "OpenEMR\\Core\\Kernel",
+    "OpenEMR\\Core\\ModulesClassLoader",
+    "OpenEMR\\Services\\Utils\\SQLUpgradeService",
     "OpenEMR\\Core\\OEGlobalsBag",
     "OpenEMR\\Events\\Globals\\GlobalsInitializedEvent",
     "OpenEMR\\Events\\PatientDocuments\\PatientDocumentEvent",
@@ -43,7 +47,8 @@
     "attr",
     "text",
     "date",
-    "OpenCoreEMR\\Modules\\YourModuleName\\GlobalConfig"
+    "ModuleManagerListener",
+    "{VendorName}\\Modules\\{ModuleName}\\GlobalConfig"
   ],
   "php-core-extensions": [
     "Core",
