@@ -1,0 +1,80 @@
+{# templates/example/list.html.twig #}
+{#
+ # Example list template demonstrating Twig patterns for OpenEMR modules.
+ #
+ # Key patterns:
+ # - Use xlt filter for translatable text
+ # - Use text filter for sanitized output
+ # - Use attr filter for HTML attributes
+ # - Use xlj filter for JavaScript strings
+ # - Always include csrf_token in forms
+ #}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ 'Module Dashboard'|xlt }}</title>
+    <link rel="stylesheet" href="{{ webroot|attr }}/public/assets/bootstrap/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>{{ title|text }}</h1>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ 'Items'|xlt }}</h5>
+            </div>
+            <div class="card-body">
+                {% if items is empty %}
+                    <p class="text-muted">{{ 'No items found.'|xlt }}</p>
+                {% else %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ 'ID'|xlt }}</th>
+                                <th>{{ 'Name'|xlt }}</th>
+                                <th>{{ 'Actions'|xlt }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>{{ item.id|text }}</td>
+                                    <td>{{ item.name|text }}</td>
+                                    <td>
+                                        <a href="?action=view&id={{ item.id|attr }}" class="btn btn-sm btn-primary">
+                                            {{ 'View'|xlt }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ 'Create New Item'|xlt }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="?action=create">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token|attr }}">
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ 'Name'|xlt }}</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        {{ 'Create'|xlt }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ webroot|attr }}/public/assets/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
