@@ -3,7 +3,7 @@
 
 version: 2
 updates:
-  # Monitor Composer dependencies
+# Monitor Composer dependencies
 - package-ecosystem: composer
   directory: /
   schedule:
