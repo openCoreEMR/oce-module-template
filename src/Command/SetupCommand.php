@@ -6,7 +6,7 @@
  * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
  * @author    OpenCoreEMR <support@opencoreemr.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 

@@ -224,7 +224,7 @@ class YourFeatureService
  * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
  * @author    Your Name <email@example.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 
@@ -370,7 +370,7 @@ Create `openemr.bootstrap.php` for OpenEMR to discover your module:
  * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
  * @author    Your Name <email@example.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 

@@ -30,6 +30,8 @@ require_once __DIR__ . '/Mocks/MockTwigContainer.php';
 require_once __DIR__ . '/Mocks/MockGlobalsInitializedEvent.php';
 require_once __DIR__ . '/Mocks/MockMenuEvent.php';
 require_once __DIR__ . '/Mocks/MockPatientDocumentEvent.php';
+require_once __DIR__ . '/Mocks/MockGlobalsAccessor.php';
+require_once __DIR__ . '/Mocks/MockEnvironmentConfigAccessor.php';
 
 // Define OpenEMR global functions used in controllers
 if (!function_exists('xlt')) {

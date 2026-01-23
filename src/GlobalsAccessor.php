@@ -9,10 +9,10 @@
  *
  * @see https://github.com/openemr/openemr/blob/master/src/Core/OEGlobalsBag.php
  *
- * @package   OpenCoreEMR
+ * @package   {VendorName}
  * @link      http://www.open-emr.org
- * @author    Your Name <your.email@opencoreemr.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @author    Your Name <your.email@example.com>
+ * @copyright Copyright (c) 2026 {VendorName}
  * @license   GNU General Public License 3
  */
 
@@ -22,8 +22,10 @@ namespace {VendorName}\Modules\{ModuleName};
  * Provides centralized access to OpenEMR globals.
  * This class serves as a single point of abstraction for globals access,
  * making it easier to update or refactor in the future.
+ *
+ * Implements ConfigAccessorInterface for database-backed configuration.
  */
-class GlobalsAccessor
+class GlobalsAccessor implements ConfigAccessorInterface
 {
     /**
      * Get a value from globals

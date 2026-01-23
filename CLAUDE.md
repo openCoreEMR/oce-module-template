@@ -92,7 +92,12 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 │   └── assets/            # Static assets (CSS, JS, images)
 ├── src/
 │   ├── Bootstrap.php      # Module initialization and DI
-│   ├── GlobalsAccessor.php # Globals access wrapper
+│   ├── ConfigAccessorInterface.php  # Configuration access abstraction
+│   ├── ConfigFactory.php            # Factory for config accessor selection
+│   ├── EnvironmentConfigAccessor.php # Env var config (for containers)
+│   ├── GlobalsAccessor.php          # Database-backed config (OpenEMR globals)
+│   ├── GlobalConfig.php             # Centralized configuration wrapper
+│   ├── ModuleAccessGuard.php        # Entry point access guard
 │   ├── Command/           # Console commands (removed after setup)
 │   │   └── SetupCommand.php
 │   ├── Controller/        # Request handlers
@@ -101,11 +106,15 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 │   ├── Service/           # Business logic
 │   │   ├── {Feature}Service.php
 │   │   └── ...
-│   ├── Exception/         # Custom exception types
-│   │   ├── {ModuleName}ExceptionInterface.php
-│   │   ├── {ModuleName}Exception.php
-│   │   └── {Specific}Exception.php
-│   └── GlobalConfig.php   # Configuration wrapper (you create this)
+│   └── Exception/         # Custom exception types
+│       ├── {ModuleName}ExceptionInterface.php
+│       ├── {ModuleName}Exception.php
+│       ├── {ModuleName}NotFoundException.php
+│       ├── {ModuleName}UnauthorizedException.php
+│       ├── {ModuleName}AccessDeniedException.php
+│       ├── {ModuleName}ValidationException.php
+│       ├── {ModuleName}ConfigurationException.php
+│       └── {ModuleName}ApiException.php
 ├── templates/
 │   └── {feature}/
 │       ├── {view}.html.twig
@@ -114,6 +123,92 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 ├── composer.json
 └── openemr.bootstrap.php  # Module loader
 ```
+
+## Configuration Abstraction Layer
+
+The template includes a flexible configuration system that supports both database-backed (OpenEMR globals) and environment variable configurations:
+
+### Key Components
+
+| File | Purpose |
+|------|---------|
+| `ConfigAccessorInterface` | Common interface for all config accessors |
+| `GlobalsAccessor` | Reads config from OpenEMR database globals |
+| `EnvironmentConfigAccessor` | Reads config from environment variables |
+| `ConfigFactory` | Selects the appropriate accessor based on environment |
+| `GlobalConfig` | Centralized wrapper providing typed access to all module config |
+
+### Usage Pattern
+
+```php
+// In Bootstrap or entry points - factory determines config source
+$configAccessor = ConfigFactory::createConfigAccessor();
+$config = new GlobalConfig($configAccessor);
+
+// Use typed getters
+$isEnabled = $config->isEnabled();      // bool
+$apiKey = $config->getApiKey();         // string (decrypted in DB mode)
+```
+
+### Environment Variable Mode
+
+Set `{VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1` to use environment variables instead of database:
+
+```bash
+# Enable env config mode
+export {VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1
+
+# Module configuration
+export {VENDOR_PREFIX}_{MODULENAME}_ENABLED=true
+export {VENDOR_PREFIX}_{MODULENAME}_API_KEY=your-api-key
+```
+
+Benefits:
+- Container-friendly deployments (no database config needed)
+- Secrets can be injected via environment
+- Config is immutable (no admin UI editing)
+
+### Adding New Config Options
+
+1. Add constant in `GlobalConfig`:
+```php
+public const CONFIG_OPTION_API_KEY = '{vendor_prefix}_{modulename}_api_key';
+```
+
+2. Add env var mapping in `EnvironmentConfigAccessor`:
+```php
+private const KEY_MAP = [
+    GlobalConfig::CONFIG_OPTION_API_KEY => '{VENDOR_PREFIX}_{MODULENAME}_API_KEY',
+];
+```
+
+3. Add getter in `GlobalConfig`:
+```php
+public function getApiKey(): string
+{
+    return $this->configAccessor->getString(self::CONFIG_OPTION_API_KEY, '');
+}
+```
+
+4. Add to `getGlobalSettingSectionConfiguration()` for admin UI.
+
+## Module Access Guard
+
+The `ModuleAccessGuard` prevents access to module endpoints when:
+1. Module is not registered in OpenEMR
+2. Module is disabled in module management
+3. Module's own 'enabled' setting is off
+
+```php
+// At top of public entry points
+$guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
+if ($guardResponse instanceof Response) {
+    $guardResponse->send();
+    exit;
+}
+```
+
+Returns 404 (not 403) to avoid leaking module presence.
 
 ## Public Entry Point Pattern
 
@@ -124,30 +219,68 @@ Public PHP files should be short! Just dispatch a controller and send a response
 /**
  * [Description of endpoint]
  *
- * @package   OpenCoreEMR
+ * @package   {VendorName}
  * @link      http://www.open-emr.org
  * @author    [Author Name] <email@example.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 {VendorName}
  * @license   GNU General Public License 3
  */
 
+$sessionAllowWrite = true;
+
+// Load module autoloader before globals.php
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../../../../globals.php';
 
 use {VendorName}\Modules\{ModuleName}\Bootstrap;
+use {VendorName}\Modules\{ModuleName}\ConfigFactory;
+use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}ExceptionInterface;
+use {VendorName}\Modules\{ModuleName}\GlobalsAccessor;
+use {VendorName}\Modules\{ModuleName}\ModuleAccessGuard;
+use Symfony\Component\HttpFoundation\Response;
+
+// Check if module is installed and enabled - return 404 if not
+$guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
+if ($guardResponse instanceof Response) {
+    $guardResponse->send();
+    exit;
+}
 
 // Get kernel and bootstrap module
-$kernel = $GLOBALS['kernel'];
-$bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel);
+$globalsAccessor = new GlobalsAccessor();
+$kernel = $globalsAccessor->get('kernel');
+if (!$kernel instanceof \OpenEMR\Core\Kernel) {
+    throw new \RuntimeException('OpenEMR Kernel not available');
+}
+$configAccessor = ConfigFactory::createConfigAccessor();
+$bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel, $configAccessor);
 
 // Get controller
 $controller = $bootstrap->get{Feature}Controller();
 
 // Determine action
-$action = $_GET['action'] ?? $_POST['action'] ?? 'default';
+$actionParam = $_GET['action'] ?? $_POST['action'] ?? 'list';
+$action = is_string($actionParam) ? $actionParam : 'list';
 
 // Dispatch to controller and send response
-$response = $controller->dispatch($action, $_REQUEST);
-$response->send();
+try {
+    $response = $controller->dispatch($action);
+    $response->send();
+} catch ({ModuleName}ExceptionInterface $e) {
+    error_log("Module error: " . $e->getMessage());
+    $response = new Response(
+        "Error: " . htmlspecialchars($e->getMessage()),
+        $e->getStatusCode()
+    );
+    $response->send();
+} catch (\Throwable $e) {
+    error_log("Unexpected error: " . $e->getMessage());
+    $response = new Response(
+        "Error: An unexpected error occurred",
+        Response::HTTP_INTERNAL_SERVER_ERROR
+    );
+    $response->send();
+}
 ```
 
 ## Controller Pattern
@@ -366,7 +499,7 @@ return new Response($content);
 
 ## Bootstrap Pattern
 
-The `Bootstrap.php` class should provide factory methods for controllers:
+The `Bootstrap.php` class should provide factory methods for controllers and accept an optional `ConfigAccessorInterface`:
 
 ```php
 <?php
@@ -388,9 +521,11 @@ class Bootstrap
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly Kernel $kernel = new Kernel(),
-        private readonly GlobalsAccessor $globals = new GlobalsAccessor()
+        ?ConfigAccessorInterface $configAccessor = null
     ) {
-        $this->globalsConfig = new GlobalConfig($this->globals);
+        // Use factory to determine config source if not provided
+        $configAccessor ??= ConfigFactory::createConfigAccessor();
+        $this->globalsConfig = new GlobalConfig($configAccessor);
 
         $templatePath = \dirname(__DIR__) . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
         $twig = new TwigContainer($templatePath, $this->kernel);
@@ -408,6 +543,27 @@ class Bootstrap
             $this->twig
         );
     }
+}
+```
+
+### Environment Config Mode in Admin UI
+
+When env config mode is enabled, the global settings section displays an informational message instead of editable fields:
+
+```php
+// In addGlobalSettingsSection()
+if ($this->globalsConfig->isEnvConfigMode()) {
+    $setting = new GlobalSetting(
+        xlt('Configuration Managed Externally'),
+        GlobalSetting::DATA_TYPE_HTML_DISPLAY_SECTION,
+        '', '', false
+    );
+    $setting->addFieldOption(
+        GlobalSetting::DATA_TYPE_OPTION_RENDER_CALLBACK,
+        static fn() => xlt('This module is configured via environment variables.')
+    );
+    $service->appendToSection($section, '{vendor_prefix}_{modulename}_env_config_notice', $setting);
+    return;
 }
 ```
 
