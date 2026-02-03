@@ -10,20 +10,21 @@
  * - Menu items
  * - Controller factory methods
  *
- * @package   {VendorName}
+ * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
- * @author    Your Name <your.email@example.com>
- * @copyright Copyright (c) 2026 {VendorName}
+ * @author    Your Name <your.email@opencoreemr.com>
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
-use {VendorName}\Modules\{ModuleName}\Controller\ExampleController;
+use OpenCoreEMR\Modules\{ModuleName}\Controller\ExampleController;
 use OpenEMR\Common\Logging\SystemLogger;
 use OpenEMR\Common\Twig\TwigContainer;
 use OpenEMR\Core\Kernel;
 use OpenEMR\Events\Globals\GlobalsInitializedEvent;
+use OpenEMR\Events\RestApiExtend\RestApiRouteEvent;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -76,8 +77,58 @@ class Bootstrap
 
         $this->logger->debug('Module is enabled and configured');
 
+        // Register API routes
+        $this->addApiRoutes();
+
         // Add additional event listeners here
         // Example: $this->eventDispatcher->addListener(SomeEvent::class, $this->handleSomeEvent(...));
+    }
+
+    /**
+     * Register REST API routes for the module
+     */
+    public function addApiRoutes(): void
+    {
+        $this->eventDispatcher->addListener(
+            RestApiRouteEvent::class,
+            $this->registerApiRoutes(...)
+        );
+    }
+
+    /**
+     * Register module API routes with OpenEMR's REST API
+     *
+     * Routes are registered under /api/{module-name}/ namespace.
+     * All routes require authentication via OAuth or session.
+     */
+    public function registerApiRoutes(RestApiRouteEvent $event): void
+    {
+        // Skip if module is disabled
+        if (!$this->globalsConfig->isEnabled()) {
+            return;
+        }
+
+        // Example API routes - uncomment and modify as needed:
+        //
+        // $event->addRoute(
+        //     'GET',
+        //     '/api/{vendor-prefix}-{modulename}/items',
+        //     [ExampleController::class, 'listItems']
+        // );
+        //
+        // $event->addRoute(
+        //     'GET',
+        //     '/api/{vendor-prefix}-{modulename}/items/{id}',
+        //     [ExampleController::class, 'getItem']
+        // );
+        //
+        // $event->addRoute(
+        //     'POST',
+        //     '/api/{vendor-prefix}-{modulename}/items',
+        //     [ExampleController::class, 'createItem']
+        // );
+
+        $this->logger->debug('Module API routes registered');
     }
 
     /**
