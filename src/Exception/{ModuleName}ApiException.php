@@ -10,7 +10,7 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName}\Exception;
+namespace OpenCoreEMR\Modules\{ModuleName}\Exception;
 
 class {ModuleName}ApiException extends {ModuleName}Exception
 {

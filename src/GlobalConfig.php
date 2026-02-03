@@ -13,7 +13,7 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
 use OpenEMR\Services\Globals\GlobalSetting;
 

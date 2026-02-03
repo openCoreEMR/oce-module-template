@@ -10,9 +10,10 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName}\Tests\Mocks;
+namespace OpenCoreEMR\Modules\{ModuleName}\Tests\Mocks;
 
-use {VendorName}\Modules\{ModuleName}\ConfigAccessorInterface;
+use OpenCoreEMR\Modules\{ModuleName}\ConfigAccessorInterface;
+use OpenEMR\Core\Kernel;
 
 /**
  * Mock implementation of ConfigAccessorInterface for testing environment config mode
@@ -69,5 +70,17 @@ class MockEnvironmentConfigAccessor implements ConfigAccessorInterface
     public function set(string $key, mixed $value): void
     {
         $this->data[$key] = $value;
+    }
+
+    /**
+     * Get the OpenEMR Kernel instance
+     *
+     * Returns null since environment config mode doesn't provide a real Kernel.
+     * Tests that need a Kernel should mock it via the data array.
+     */
+    public function getKernel(): ?Kernel
+    {
+        $kernel = $this->get('kernel');
+        return $kernel instanceof Kernel ? $kernel : null;
     }
 }

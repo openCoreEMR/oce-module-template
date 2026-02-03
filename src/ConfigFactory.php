@@ -10,7 +10,7 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
 /**
  * Factory for creating the appropriate configuration accessor.

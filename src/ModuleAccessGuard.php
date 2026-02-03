@@ -10,7 +10,7 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
 use OpenEMR\Common\Database\QueryUtils;
 use Symfony\Component\HttpFoundation\Response;

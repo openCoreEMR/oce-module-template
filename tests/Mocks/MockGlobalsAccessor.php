@@ -10,10 +10,11 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName}\Tests\Mocks;
+namespace OpenCoreEMR\Modules\{ModuleName}\Tests\Mocks;
 
-use {VendorName}\Modules\{ModuleName}\ConfigAccessorInterface;
-use {VendorName}\Modules\{ModuleName}\GlobalsAccessor;
+use OpenCoreEMR\Modules\{ModuleName}\ConfigAccessorInterface;
+use OpenCoreEMR\Modules\{ModuleName}\GlobalsAccessor;
+use OpenEMR\Core\Kernel;
 
 class MockGlobalsAccessor extends GlobalsAccessor implements ConfigAccessorInterface
 {
@@ -78,5 +79,14 @@ class MockGlobalsAccessor extends GlobalsAccessor implements ConfigAccessorInter
     public function set(string $key, mixed $value): void
     {
         $this->mockData[$key] = $value;
+    }
+
+    /**
+     * Get the OpenEMR Kernel instance
+     */
+    public function getKernel(): ?Kernel
+    {
+        $kernel = $this->get('kernel');
+        return $kernel instanceof Kernel ? $kernel : null;
     }
 }
