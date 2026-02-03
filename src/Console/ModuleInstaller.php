@@ -13,7 +13,7 @@
  */
 
 // TEMPLATE: Update namespace to match your module
-namespace {VendorName}\Modules\{ModuleName}\Console;
+namespace OpenCoreEMR\Modules\{ModuleName}\Console;
 
 use OpenEMR\Common\Database\QueryUtils;
 use Symfony\Component\Console\Output\OutputInterface;

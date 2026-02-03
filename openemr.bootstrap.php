@@ -9,17 +9,17 @@
  * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
  * @author    Your Name <your.email@opencoreemr.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
 /**
  * @var \OpenEMR\Core\ModulesClassLoader $classLoader Injected by the OpenEMR module loader
  */
 $classLoader->registerNamespaceIfNotExists(
-    '{VendorName}\\Modules\\{ModuleName}\\',
+    'OpenCoreEMR\\Modules\\{ModuleName}\\',
     __DIR__ . DIRECTORY_SEPARATOR . 'src'
 );
 

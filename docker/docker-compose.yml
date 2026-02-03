@@ -1,0 +1,91 @@
+# Docker Compose configuration for module development
+#
+# This provides a complete OpenEMR development environment with the module
+# automatically mounted and registered.
+#
+# Usage:
+#   cp .env.dist .env        # Configure environment
+#   docker compose up -d     # Start services
+#   docker compose logs -f   # View logs
+#
+# The module is mounted at:
+#   /var/www/localhost/htdocs/openemr/interface/modules/custom_modules/{vendor-prefix}-module-{modulename}
+#
+# @package   OpenCoreEMR
+# @copyright Copyright (c) 2026 OpenCoreEMR Inc
+# @license   GNU General Public License 3
+
+services:
+  openemr:
+    image: openemr/openemr:7.0.2
+    ports:
+    - "${OPENEMR_PORT:-8080}:80"
+    - "${OPENEMR_SSL_PORT:-8443}:443"
+    volumes:
+    # Mount module source into OpenEMR
+    - ..:/var/www/localhost/htdocs/openemr/interface/modules/custom_modules/{vendor-prefix}-module-{modulename}:ro
+    # Persist OpenEMR data
+    - openemr-sites:/var/www/localhost/htdocs/openemr/sites
+    - openemr-logs:/var/log
+    # Auto-registration script
+    - ./scripts/enable-module.sh:/var/www/localhost/htdocs/openemr/interface/modules/custom_modules/{vendor-prefix}-module-{modulename}/docker/scripts/enable-module.sh:ro
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASS: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_USER: ${MYSQL_USER:-openemr}
+      MYSQL_PASS: ${MYSQL_PASSWORD:-openemr}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-openemr}
+      OE_USER: ${OPENEMR_ADMIN_USER:-admin}
+      OE_PASS: ${OPENEMR_ADMIN_PASSWORD:-pass}
+      # Module-specific environment config (optional)
+      # {VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG: "1"
+      # {VENDOR_PREFIX}_{MODULENAME}_ENABLED: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  mysql:
+    image: mariadb:10.11
+    command:
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_general_ci
+    ports:
+    - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+    - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-openemr}
+      MYSQL_USER: ${MYSQL_USER:-openemr}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-openemr}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Optional: phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    profiles:
+    - tools
+    ports:
+    - "${PHPMYADMIN_PORT:-8081}:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    depends_on:
+    - mysql
+
+volumes:
+  mysql-data:
+  openemr-sites:
+  openemr-logs:

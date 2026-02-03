@@ -13,9 +13,9 @@
  */
 
 // TEMPLATE: Update namespace to match your module
-namespace {VendorName}\Modules\{ModuleName}\Console\Command;
+namespace OpenCoreEMR\Modules\{ModuleName}\Console\Command;
 
-use {VendorName}\Modules\{ModuleName}\Console\ModuleInstaller;
+use OpenCoreEMR\Modules\{ModuleName}\Console\ModuleInstaller;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -90,7 +90,7 @@ abstract class AbstractModuleCommand extends Command
     protected function getInstaller(): ModuleInstaller
     {
         // TEMPLATE: Update namespace in instanceof check
-        if (!$this->installer instanceof \{VendorName}\Modules\{ModuleName}\Console\ModuleInstaller) {
+        if (!$this->installer instanceof \OpenCoreEMR\Modules\{ModuleName}\Console\ModuleInstaller) {
             throw new \RuntimeException('Installer not initialized. Call bootstrapOpenEmr() first.');
         }
         return $this->installer;

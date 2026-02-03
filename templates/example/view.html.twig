@@ -1,0 +1,49 @@
+{# templates/example/view.html.twig #}
+{#
+ # Example detail view template.
+ #}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ 'View Item'|xlt }}</title>
+    <link rel="stylesheet" href="{{ webroot|attr }}/public/assets/bootstrap/dist/css/bootstrap.min.css">
+    <script defer src="{{ webroot|attr }}/public/assets/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="?action=list">{{ 'Dashboard'|xlt }}</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ 'View Item'|xlt }}
+                </li>
+            </ol>
+        </nav>
+
+        <h1>{{ title|text }}</h1>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ 'Item Details'|xlt }}</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">{{ 'ID'|xlt }}</dt>
+                    <dd class="col-sm-9">{{ item.id|text }}</dd>
+
+                    <dt class="col-sm-3">{{ 'Name'|xlt }}</dt>
+                    <dd class="col-sm-9">{{ item.name|text }}</dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <a href="?action=list" class="btn btn-secondary">
+                    {{ 'Back to List'|xlt }}
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -13,16 +13,18 @@
  * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
  * @author    Your Name <your.email@opencoreemr.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
+use OpenCoreEMR\Modules\{ModuleName}\Controller\ExampleController;
 use OpenEMR\Common\Logging\SystemLogger;
 use OpenEMR\Common\Twig\TwigContainer;
 use OpenEMR\Core\Kernel;
 use OpenEMR\Events\Globals\GlobalsInitializedEvent;
+use OpenEMR\Events\RestApiExtend\RestApiRouteEvent;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -38,9 +40,10 @@ class Bootstrap
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly Kernel $kernel = new Kernel(),
-        private readonly GlobalsAccessor $globals = new GlobalsAccessor()
+        ?ConfigAccessorInterface $configAccessor = null
     ) {
-        $this->globalsConfig = new GlobalConfig($this->globals);
+        $configAccessor ??= ConfigFactory::createConfigAccessor();
+        $this->globalsConfig = new GlobalConfig($configAccessor);
 
         $templatePath = \dirname(__DIR__) . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
         $twig = new TwigContainer($templatePath, $this->kernel);
@@ -74,8 +77,58 @@ class Bootstrap
 
         $this->logger->debug('Module is enabled and configured');
 
+        // Register API routes
+        $this->addApiRoutes();
+
         // Add additional event listeners here
         // Example: $this->eventDispatcher->addListener(SomeEvent::class, $this->handleSomeEvent(...));
+    }
+
+    /**
+     * Register REST API routes for the module
+     */
+    public function addApiRoutes(): void
+    {
+        $this->eventDispatcher->addListener(
+            RestApiRouteEvent::class,
+            $this->registerApiRoutes(...)
+        );
+    }
+
+    /**
+     * Register module API routes with OpenEMR's REST API
+     *
+     * Routes are registered under /api/{module-name}/ namespace.
+     * All routes require authentication via OAuth or session.
+     */
+    public function registerApiRoutes(RestApiRouteEvent $event): void
+    {
+        // Skip if module is disabled
+        if (!$this->globalsConfig->isEnabled()) {
+            return;
+        }
+
+        // Example API routes - uncomment and modify as needed:
+        //
+        // $event->addRoute(
+        //     'GET',
+        //     '/api/{vendor-prefix}-{modulename}/items',
+        //     [ExampleController::class, 'listItems']
+        // );
+        //
+        // $event->addRoute(
+        //     'GET',
+        //     '/api/{vendor-prefix}-{modulename}/items/{id}',
+        //     [ExampleController::class, 'getItem']
+        // );
+        //
+        // $event->addRoute(
+        //     'POST',
+        //     '/api/{vendor-prefix}-{modulename}/items',
+        //     [ExampleController::class, 'createItem']
+        // );
+
+        $this->logger->debug('Module API routes registered');
     }
 
     /**
@@ -98,17 +151,35 @@ class Bootstrap
         $section = xlt("Your Module Name");
         $service->createSection($section, 'Module');
 
+        // In env config mode, show informational message instead of editable fields
+        if ($this->globalsConfig->isEnvConfigMode()) {
+            $setting = new GlobalSetting(
+                xlt('Configuration Managed Externally'),
+                GlobalSetting::DATA_TYPE_HTML_DISPLAY_SECTION,
+                '',
+                '',
+                false
+            );
+            $setting->addFieldOption(
+                GlobalSetting::DATA_TYPE_OPTION_RENDER_CALLBACK,
+                static fn() => xlt(
+                    'This module is configured via environment variables by deployment administrators.'
+                )
+            );
+            $service->appendToSection($section, '{vendor_prefix}_{modulename}_env_config_notice', $setting);
+            return;
+        }
+
         $settings = $this->globalsConfig->getGlobalSettingSectionConfiguration();
 
         foreach ($settings as $key => $config) {
-            $value = $this->globals->get($key, $config['default']);
             $service->appendToSection(
                 $section,
                 $key,
                 new GlobalSetting(
                     xlt($config['title']),
                     $config['type'],
-                    $value,
+                    $config['default'],
                     xlt($config['description']),
                     true
                 )
@@ -132,6 +203,10 @@ class Bootstrap
      */
     public function addModuleMenuItem(MenuEvent $event): void
     {
+        if (!$this->globalsConfig->isEnabled()) {
+            return;
+        }
+
         $menu = $event->getMenu();
 
         $menuItem = new \stdClass();
@@ -143,7 +218,6 @@ class Bootstrap
         $menuItem->icon = 'fa-star'; // Change to appropriate FontAwesome icon
         $menuItem->children = [];
         $menuItem->acl_req = ["patients", "demo"]; // Adjust ACL requirements as needed
-        $menuItem->global_req = ["yourmodule_enabled"]; // Match your global setting name
 
         foreach ($menu as $item) {
             if ($item->menu_id == 'modimg') {
@@ -154,7 +228,20 @@ class Bootstrap
     }
 
     /**
-     * Factory method for your controllers
+     * Get ExampleController instance
+     *
+     * Factory method for creating the controller with all dependencies.
+     */
+    public function getExampleController(): ExampleController
+    {
+        return new ExampleController(
+            $this->globalsConfig,
+            $this->twig
+        );
+    }
+
+    /**
+     * Factory method template for your controllers
      *
      * Add factory methods here to create controller instances with proper dependencies.
      * Example:

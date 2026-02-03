@@ -1,0 +1,6 @@
+# Docker environment configuration
+# Copy .env.dist to .env for local development
+.env
+
+# Docker-generated files
+.docker-sql-installed
