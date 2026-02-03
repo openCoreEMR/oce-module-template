@@ -10,9 +10,15 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName}\Exception;
+namespace OpenCoreEMR\Modules\{ModuleName}\Exception;
 
-abstract class {ModuleName}Exception extends \RuntimeException implements {ModuleName}ExceptionInterface
+/**
+ * Abstract base class for HTTP-aware module exceptions.
+ *
+ * Extend this class for exceptions that should map to specific HTTP status codes.
+ * For exceptions without HTTP semantics, implement {ModuleName}ExceptionInterface directly.
+ */
+abstract class {ModuleName}Exception extends \RuntimeException implements {ModuleName}HttpExceptionInterface
 {
     /**
      * Get the HTTP status code for this exception

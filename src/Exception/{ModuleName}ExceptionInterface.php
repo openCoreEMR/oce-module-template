@@ -10,12 +10,15 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName}\Exception;
+namespace OpenCoreEMR\Modules\{ModuleName}\Exception;
 
+/**
+ * Marker interface for all module exceptions.
+ *
+ * This interface identifies exceptions originating from this module without
+ * imposing any specific contract. Use {ModuleName}HttpExceptionInterface for
+ * exceptions that map to HTTP status codes.
+ */
 interface {ModuleName}ExceptionInterface extends \Throwable
 {
-    /**
-     * Get the HTTP status code for this exception
-     */
-    public function getStatusCode(): int;
 }
