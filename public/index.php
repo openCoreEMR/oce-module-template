@@ -20,11 +20,11 @@ $sessionAllowWrite = true;
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../../../../globals.php';
 
-use {VendorName}\Modules\{ModuleName}\Bootstrap;
-use {VendorName}\Modules\{ModuleName}\ConfigFactory;
-use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}ExceptionInterface;
-use {VendorName}\Modules\{ModuleName}\GlobalsAccessor;
-use {VendorName}\Modules\{ModuleName}\ModuleAccessGuard;
+use OpenCoreEMR\Modules\{ModuleName}\Bootstrap;
+use OpenCoreEMR\Modules\{ModuleName}\ConfigFactory;
+use OpenCoreEMR\Modules\{ModuleName}\Exception\{ModuleName}HttpExceptionInterface;
+use OpenCoreEMR\Modules\{ModuleName}\GlobalsAccessor;
+use OpenCoreEMR\Modules\{ModuleName}\ModuleAccessGuard;
 use Symfony\Component\HttpFoundation\Response;
 
 // Check if module is installed and enabled - return 404 if not
@@ -50,11 +50,15 @@ $controller = $bootstrap->getExampleController();
 $actionParam = $_GET['action'] ?? $_POST['action'] ?? 'list';
 $action = is_string($actionParam) ? $actionParam : 'list';
 
+// Build params array from request
+$params = array_merge($_GET, $_POST);
+$params['_self'] = $_SERVER['PHP_SELF'] ?? '/';
+
 // Dispatch to controller and send response
 try {
-    $response = $controller->dispatch($action);
+    $response = $controller->dispatch($action, $params);
     $response->send();
-} catch ({ModuleName}ExceptionInterface $e) {
+} catch ({ModuleName}HttpExceptionInterface $e) {
     error_log("Module error: " . $e->getMessage());
     $response = new Response(
         "Error: " . htmlspecialchars($e->getMessage()),

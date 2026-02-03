@@ -10,14 +10,14 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName}\Controller;
+namespace OpenCoreEMR\Modules\{ModuleName}\Controller;
 
-use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}AccessDeniedException;
-use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}NotFoundException;
-use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}ValidationException;
-use {VendorName}\Modules\{ModuleName}\GlobalConfig;
+use OpenCoreEMR\Modules\{ModuleName}\Exception\{ModuleName}AccessDeniedException;
+use OpenCoreEMR\Modules\{ModuleName}\Exception\{ModuleName}ValidationException;
+use OpenCoreEMR\Modules\{ModuleName}\GlobalConfig;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\SystemLogger;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
 
@@ -45,12 +45,14 @@ class ExampleController
 
     /**
      * Dispatch action to appropriate method
+     *
+     * @param array<string, mixed> $params Request parameters (typically from $_GET + $_POST)
      */
-    public function dispatch(string $action): Response
+    public function dispatch(string $action, array $params = []): Response
     {
         return match ($action) {
-            'view' => $this->showView(),
-            'create' => $this->handleCreate(),
+            'view' => $this->showView($params),
+            'create' => $this->handleCreate($params),
             'list' => $this->showList(),
             default => $this->showList(),
         };
@@ -75,10 +77,12 @@ class ExampleController
 
     /**
      * Show single item view
+     *
+     * @param array<string, mixed> $params
      */
-    private function showView(): Response
+    private function showView(array $params): Response
     {
-        $id = $_GET['id'] ?? null;
+        $id = $params['id'] ?? null;
 
         if (empty($id)) {
             throw new {ModuleName}ValidationException('Item ID is required');
@@ -102,17 +106,19 @@ class ExampleController
 
     /**
      * Handle create action (POST)
+     *
+     * @param array<string, mixed> $params
      */
-    private function handleCreate(): Response
+    private function handleCreate(array $params): Response
     {
         // Validate CSRF token
-        $csrfToken = $_POST['csrf_token'] ?? '';
+        $csrfToken = $params['csrf_token'] ?? '';
         if (!CsrfUtils::verifyCsrfToken($csrfToken)) {
             throw new {ModuleName}AccessDeniedException('CSRF token verification failed');
         }
 
         // Validate input
-        $name = $_POST['name'] ?? '';
+        $name = $params['name'] ?? '';
         if (empty($name)) {
             throw new {ModuleName}ValidationException('Name is required');
         }
@@ -124,10 +130,9 @@ class ExampleController
 
             $this->logger->debug("Created item: {$name}");
 
-            // Redirect back to list
-            return new Response('', Response::HTTP_FOUND, [
-                'Location' => $_SERVER['PHP_SELF']
-            ]);
+            // Redirect back to list - use PHP_SELF from params for testability
+            $redirectUrl = $params['_self'] ?? '/';
+            return new RedirectResponse($redirectUrl);
         } catch (\Throwable $e) {
             $this->logger->error("Error creating item: " . $e->getMessage());
             throw $e;
