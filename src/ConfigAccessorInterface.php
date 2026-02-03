@@ -10,7 +10,9 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
+
+use OpenEMR\Core\Kernel;
 
 /**
  * Abstraction for configuration access, matching Symfony ParameterBag's typed accessor methods.
@@ -18,6 +20,11 @@ namespace {VendorName}\Modules\{ModuleName};
  */
 interface ConfigAccessorInterface
 {
+    /**
+     * Get the OpenEMR Kernel instance
+     */
+    public function getKernel(): ?Kernel;
+
     /**
      * Get a configuration value
      */

@@ -9,14 +9,16 @@
  *
  * @see https://github.com/openemr/openemr/blob/master/src/Core/OEGlobalsBag.php
  *
- * @package   {VendorName}
+ * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
- * @author    Your Name <your.email@example.com>
- * @copyright Copyright (c) 2026 {VendorName}
+ * @author    Your Name <your.email@opencoreemr.com>
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
+
+use OpenEMR\Core\Kernel;
 
 /**
  * Provides centralized access to OpenEMR globals.
@@ -90,5 +92,14 @@ class GlobalsAccessor implements ConfigAccessorInterface
     public function all(): array
     {
         return $GLOBALS;
+    }
+
+    /**
+     * Get the OpenEMR Kernel instance
+     */
+    public function getKernel(): ?Kernel
+    {
+        $kernel = $this->get('kernel');
+        return $kernel instanceof Kernel ? $kernel : null;
     }
 }

@@ -10,8 +10,9 @@
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
+use OpenEMR\Core\Kernel;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
 /**
@@ -39,6 +40,8 @@ class EnvironmentConfigAccessor implements ConfigAccessorInterface
     private const KEY_MAP = [
         GlobalConfig::CONFIG_OPTION_ENABLED => '{VENDOR_PREFIX}_{MODULENAME}_ENABLED',
         // Add your config option mappings here
+        // GlobalConfig::CONFIG_OPTION_API_KEY => '{VENDOR_PREFIX}_{MODULENAME}_API_KEY',
+        // GlobalConfig::CONFIG_OPTION_API_SECRET => '{VENDOR_PREFIX}_{MODULENAME}_API_SECRET',
     ];
 
     /** @var ParameterBag<string, mixed> */
@@ -113,5 +116,15 @@ class EnvironmentConfigAccessor implements ConfigAccessorInterface
         }
 
         return $this->globalsAccessor->has($key);
+    }
+
+    /**
+     * Get the OpenEMR Kernel instance
+     *
+     * Delegates to GlobalsAccessor since Kernel is always from OpenEMR globals.
+     */
+    public function getKernel(): ?Kernel
+    {
+        return $this->globalsAccessor->getKernel();
     }
 }
