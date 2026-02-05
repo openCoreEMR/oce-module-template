@@ -684,9 +684,7 @@ task module:reinstall   # Unregister and reinstall
 ### Code Quality
 
 ```bash
-task check              # Run all checks (pre-commit)
-composer check          # Run composer-based checks only
-composer phpstan        # PHPStan at level 10
+pre-commit run -a       # Run all checks
 composer test           # Run PHPUnit tests
 ```
 
