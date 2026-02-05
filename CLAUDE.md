@@ -211,6 +211,10 @@ run();  // Rest of entry logic in a function so the guard can return instead of 
 
 Returns 404 (not 403) to avoid leaking module presence. Wrapping the rest of the entry point in a function (e.g. `run()`) allows the guard to use `return` instead of `exit`, keeps the template testable, and avoids any exception for "exit in guard only" in the coding standards.
 
+### Authentication and ACL
+
+Entry points load `globals.php`, which typically starts the OpenEMR session. For sensitive operations (create, update, delete, or viewing sensitive data), call OpenEMR's ACL (e.g. `AclMain::aclCheckCore('section', 'action')`) and throw `{ModuleName}UnauthorizedException` or `{ModuleName}AccessDeniedException` if the check fails. The menu item's `acl_req` controls visibility; controllers must enforce the same (or stricter) ACL before performing the action.
+
 ## Public Entry Point Pattern
 
 Public PHP files should be short! Just dispatch a controller and send a response. Follow this pattern:
@@ -678,12 +682,13 @@ Update `.composer-require-checker.json` to whitelist OpenEMR symbols:
 
 - ✅ Always validate CSRF tokens on POST requests
 - ✅ Require POST (or correct method) for write actions; only merge POST into params when method is POST
-- ✅ Check user authentication before sensitive operations
+- ✅ Check user authentication and ACL before sensitive operations (e.g. `AclMain::aclCheckCore()`); throw UnauthorizedException or AccessDeniedException if denied
 - ✅ Use `realpath()` and path validation to prevent directory traversal
 - ✅ Sanitize all user input in templates (`text`, `attr` filters)
-- ✅ Log security events (failed auth, path traversal attempts)
+- ✅ Log security events (failed auth, path traversal attempts); pass user/sensitive data as structured context (e.g. `['name' => $name]`), not interpolated into the message, to avoid log injection and parsing issues
 - ✅ Never expose detailed error messages to users
 - ✅ Use explicit checks (e.g. `=== ''`, `=== null`) instead of `empty()` for string/ID validation so values like `"0"` are not rejected
+- ✅ Do not redirect to user-supplied URLs; use a server-derived value (e.g. `$_SERVER['PHP_SELF']`) or an allowlist of allowed targets
 
 ## Summary - Quick Checklist
 
@@ -696,6 +701,7 @@ Before considering work complete:
 - [ ] Twig templates for all HTML (no inline HTML in PHP)
 - [ ] CSRF validation on all POST requests
 - [ ] Write actions require POST; entry point only merges POST params when method is POST
+- [ ] ACL enforced in controller (or entry point) for sensitive actions; no redirect to user-supplied URLs
 - [ ] All pre-commit checks passing
 - [ ] PHPDoc comments with proper type hints
 - [ ] Symfony HTTP Foundation components used throughout

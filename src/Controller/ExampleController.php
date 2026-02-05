@@ -117,6 +117,11 @@ class ExampleController
             throw new {ModuleName}AccessDeniedException('CSRF token verification failed');
         }
 
+        // Enforce ACL for this action (example; adjust section/action to your module)
+        // if (!\OpenEMR\Common\Acl\AclMain::aclCheckCore('patients', 'demo')) {
+        //     throw new {ModuleName}AccessDeniedException('Insufficient permissions');
+        // }
+
         // Validate input (trim so whitespace-only is rejected; use === '' not empty() so "0" is valid)
         $name = trim($params['name'] ?? '');
         if ($name === '') {
@@ -126,9 +131,9 @@ class ExampleController
         // Example: create item via service
         // $this->service->create(['name' => $name]);
 
-        $this->logger->debug("Created item: {$name}");
+        $this->logger->debug('Created item', ['name' => $name]);
 
-        // Redirect back to list - use PHP_SELF from params for testability
+        // Redirect back to list; _self is set by the entry point from $_SERVER['PHP_SELF'] (not user-supplied)
         $redirectUrl = $params['_self'] ?? '/';
         return new RedirectResponse($redirectUrl);
     }
