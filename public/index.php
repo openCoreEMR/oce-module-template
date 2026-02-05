@@ -31,45 +31,62 @@ use Symfony\Component\HttpFoundation\Response;
 $guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
 if ($guardResponse instanceof Response) {
     $guardResponse->send();
-    exit;
+    return;
 }
 
-// Get kernel and bootstrap module
-$globalsAccessor = new GlobalsAccessor();
-$kernel = $globalsAccessor->get('kernel');
-if (!$kernel instanceof \OpenEMR\Core\Kernel) {
-    throw new \RuntimeException('OpenEMR Kernel not available');
+run();
+
+/**
+ * Main entry logic. Wrapped in a function so the guard above can use return
+ * instead of exit, keeping the template consistent with CLAUDE.md (no exit/die).
+ */
+function run(): void
+{
+    $globalsAccessor = new GlobalsAccessor();
+    $kernel = $globalsAccessor->get('kernel');
+    if (!$kernel instanceof \OpenEMR\Core\Kernel) {
+        throw new \RuntimeException('OpenEMR Kernel not available');
+    }
+    $configAccessor = ConfigFactory::createConfigAccessor();
+    $bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel, $configAccessor);
+
+    $controller = $bootstrap->getExampleController();
+
+    $actionParam = $_GET['action'] ?? $_POST['action'] ?? 'list';
+    $action = is_string($actionParam) ? $actionParam : 'list';
+
+    $params = array_merge($_GET, $_POST);
+    $params['_self'] = $_SERVER['PHP_SELF'] ?? '/';
+
+    try {
+        $response = $controller->dispatch($action, $params);
+        $response->send();
+    } catch ({ModuleName}HttpExceptionInterface $e) {
+        error_log("Module error: " . $e->getMessage());
+        $response = createErrorResponse($e->getStatusCode(), $kernel, $bootstrap->getWebroot());
+        $response->send();
+    } catch (\Throwable $e) {
+        error_log("Unexpected error: " . $e->getMessage());
+        $response = createErrorResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $kernel, $bootstrap->getWebroot());
+        $response->send();
+    }
 }
-$configAccessor = ConfigFactory::createConfigAccessor();
-$bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel, $configAccessor);
 
-// Get controller
-$controller = $bootstrap->getExampleController();
-
-// Determine action
-$actionParam = $_GET['action'] ?? $_POST['action'] ?? 'list';
-$action = is_string($actionParam) ? $actionParam : 'list';
-
-// Build params array from request
-$params = array_merge($_GET, $_POST);
-$params['_self'] = $_SERVER['PHP_SELF'] ?? '/';
-
-// Dispatch to controller and send response
-try {
-    $response = $controller->dispatch($action, $params);
-    $response->send();
-} catch ({ModuleName}HttpExceptionInterface $e) {
-    error_log("Module error: " . $e->getMessage());
-    $response = new Response(
-        "Error: " . htmlspecialchars($e->getMessage()),
-        $e->getStatusCode()
-    );
-    $response->send();
-} catch (\Throwable $e) {
-    error_log("Unexpected error: " . $e->getMessage());
-    $response = new Response(
-        "Error: An unexpected error occurred",
-        Response::HTTP_INTERNAL_SERVER_ERROR
-    );
-    $response->send();
+/**
+ * Build a generic error response (Twig) so exception messages are not shown to users.
+ */
+function createErrorResponse(
+    int $statusCode,
+    \OpenEMR\Core\Kernel $kernel,
+    string $webroot = ''
+): Response {
+    $templatePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR;
+    $twigContainer = new \OpenEMR\Common\Twig\TwigContainer($templatePath, $kernel);
+    $twig = $twigContainer->getTwig();
+    $content = $twig->render('error.html.twig', [
+        'status_code' => $statusCode,
+        'title' => $statusCode >= 500 ? 'Server Error' : 'Error',
+        'webroot' => $webroot,
+    ]);
+    return new Response($content, $statusCode);
 }

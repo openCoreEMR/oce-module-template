@@ -84,7 +84,7 @@ class ExampleController
     {
         $id = $params['id'] ?? null;
 
-        if (empty($id)) {
+        if ($id === null) {
             throw new {ModuleName}ValidationException('Item ID is required');
         }
 
@@ -123,19 +123,13 @@ class ExampleController
             throw new {ModuleName}ValidationException('Name is required');
         }
 
-        // Process the request
-        try {
-            // Example: create item via service
-            // $this->service->create(['name' => $name]);
+        // Example: create item via service
+        // $this->service->create(['name' => $name]);
 
-            $this->logger->debug("Created item: {$name}");
+        $this->logger->debug("Created item: {$name}");
 
-            // Redirect back to list - use PHP_SELF from params for testability
-            $redirectUrl = $params['_self'] ?? '/';
-            return new RedirectResponse($redirectUrl);
-        } catch (\Throwable $e) {
-            $this->logger->error("Error creating item: " . $e->getMessage());
-            throw $e;
-        }
+        // Redirect back to list - use PHP_SELF from params for testability
+        $redirectUrl = $params['_self'] ?? '/';
+        return new RedirectResponse($redirectUrl);
     }
 }

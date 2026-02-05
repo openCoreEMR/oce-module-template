@@ -10,16 +10,16 @@
  * - Menu items
  * - Controller factory methods
  *
- * @package   {VendorName}
+ * @package   OpenCoreEMR
  * @link      http://www.open-emr.org
  * @author    Your Name <your.email@example.com>
- * @copyright Copyright (c) 2026 {VendorName}
+ * @copyright Copyright (c) 2026 OpenCoreEMR
  * @license   GNU General Public License 3
  */
 
-namespace {VendorName}\Modules\{ModuleName};
+namespace OpenCoreEMR\Modules\{ModuleName};
 
-use {VendorName}\Modules\{ModuleName}\Controller\ExampleController;
+use OpenCoreEMR\Modules\{ModuleName}\Controller\ExampleController;
 use OpenEMR\Common\Logging\SystemLogger;
 use OpenEMR\Common\Twig\TwigContainer;
 use OpenEMR\Core\Kernel;
@@ -174,6 +174,14 @@ class Bootstrap
                 break;
             }
         }
+    }
+
+    /**
+     * Get OpenEMR webroot path (for use in templates, e.g. asset links).
+     */
+    public function getWebroot(): string
+    {
+        return $this->globalsConfig->getWebroot();
     }
 
     /**

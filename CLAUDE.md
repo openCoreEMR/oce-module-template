@@ -200,15 +200,16 @@ The `ModuleAccessGuard` prevents access to module endpoints when:
 3. Module's own 'enabled' setting is off
 
 ```php
-// At top of public entry points
+// At top of public entry points. Use return (not exit) to stay consistent with "no exit/die" rules.
 $guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
 if ($guardResponse instanceof Response) {
     $guardResponse->send();
-    exit;
+    return;
 }
+run();  // Rest of entry logic in a function so the guard can return instead of exit
 ```
 
-Returns 404 (not 403) to avoid leaking module presence.
+Returns 404 (not 403) to avoid leaking module presence. Wrapping the rest of the entry point in a function (e.g. `run()`) allows the guard to use `return` instead of `exit`, keeps the template testable, and avoids any exception for "exit in guard only" in the coding standards.
 
 ## Public Entry Point Pattern
 
@@ -243,45 +244,32 @@ use Symfony\Component\HttpFoundation\Response;
 $guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
 if ($guardResponse instanceof Response) {
     $guardResponse->send();
-    exit;
+    return;
 }
+run();
 
-// Get kernel and bootstrap module
-$globalsAccessor = new GlobalsAccessor();
-$kernel = $globalsAccessor->get('kernel');
-if (!$kernel instanceof \OpenEMR\Core\Kernel) {
-    throw new \RuntimeException('OpenEMR Kernel not available');
-}
-$configAccessor = ConfigFactory::createConfigAccessor();
-$bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel, $configAccessor);
-
-// Get controller
-$controller = $bootstrap->get{Feature}Controller();
-
-// Determine action
-$actionParam = $_GET['action'] ?? $_POST['action'] ?? 'list';
-$action = is_string($actionParam) ? $actionParam : 'list';
-
-// Dispatch to controller and send response
-try {
-    $response = $controller->dispatch($action);
-    $response->send();
-} catch ({ModuleName}ExceptionInterface $e) {
-    error_log("Module error: " . $e->getMessage());
-    $response = new Response(
-        "Error: " . htmlspecialchars($e->getMessage()),
-        $e->getStatusCode()
-    );
-    $response->send();
-} catch (\Throwable $e) {
-    error_log("Unexpected error: " . $e->getMessage());
-    $response = new Response(
-        "Error: An unexpected error occurred",
-        Response::HTTP_INTERNAL_SERVER_ERROR
-    );
-    $response->send();
+function run(): void {
+    // Get kernel and bootstrap module
+    $globalsAccessor = new GlobalsAccessor();
+    $kernel = $globalsAccessor->get('kernel');
+    // ... bootstrap, get controller, dispatch ...
+    try {
+        $response = $controller->dispatch($action);
+        $response->send();
+    } catch ({ModuleName}ExceptionInterface $e) {
+        error_log("Module error: " . $e->getMessage());
+        // Use a generic Twig error page; do not show exception messages to users
+        $response = createErrorResponse($e->getStatusCode(), $kernel, $bootstrap->getWebroot());
+        $response->send();
+    } catch (\Throwable $e) {
+        error_log("Unexpected error: " . $e->getMessage());
+        $response = createErrorResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $kernel, $bootstrap->getWebroot());
+        $response->send();
+    }
 }
 ```
+
+In exception handlers, render a generic error template (e.g. `templates/error.html.twig`) instead of echoing exception messages, to avoid leaking implementation details. Log the real message with `error_log()`.
 
 ## Controller Pattern
 

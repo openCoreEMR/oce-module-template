@@ -24,7 +24,7 @@ class GlobalConfig
     public function __construct(
         private readonly ConfigAccessorInterface $configAccessor = new GlobalsAccessor()
     ) {
-        $this->isEnvConfigMode = ConfigFactory::isEnvConfigMode();
+        $this->isEnvConfigMode = $configAccessor instanceof EnvironmentConfigAccessor;
     }
 
     /**

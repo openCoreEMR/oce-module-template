@@ -48,9 +48,9 @@ class EnvironmentConfigAccessor implements ConfigAccessorInterface
     private readonly ParameterBag $envBag;
     private readonly GlobalsAccessor $globalsAccessor;
 
-    public function __construct()
+    public function __construct(?GlobalsAccessor $globalsAccessor = null)
     {
-        $this->globalsAccessor = new GlobalsAccessor();
+        $this->globalsAccessor = $globalsAccessor ?? new GlobalsAccessor();
         $this->envBag = $this->buildEnvBag();
     }
 
