@@ -348,8 +348,9 @@ class {Feature}Controller
             throw new {ModuleName}AccessDeniedException("CSRF token verification failed");
         }
 
-        // Validate input
-        if (empty($params['required_field'])) {
+        // Validate input (use explicit check; avoid empty() which treats "0" as missing)
+        $required = trim($params['required_field'] ?? '');
+        if ($required === '') {
             throw new {ModuleName}ValidationException("Required field is missing");
         }
 
@@ -676,11 +677,13 @@ Update `.composer-require-checker.json` to whitelist OpenEMR symbols:
 ## Security Checklist
 
 - ✅ Always validate CSRF tokens on POST requests
+- ✅ Require POST (or correct method) for write actions; only merge POST into params when method is POST
 - ✅ Check user authentication before sensitive operations
 - ✅ Use `realpath()` and path validation to prevent directory traversal
 - ✅ Sanitize all user input in templates (`text`, `attr` filters)
 - ✅ Log security events (failed auth, path traversal attempts)
 - ✅ Never expose detailed error messages to users
+- ✅ Use explicit checks (e.g. `=== ''`, `=== null`) instead of `empty()` for string/ID validation so values like `"0"` are not rejected
 
 ## Summary - Quick Checklist
 
@@ -692,6 +695,7 @@ Before considering work complete:
 - [ ] Custom exception hierarchy with interface and getStatusCode()
 - [ ] Twig templates for all HTML (no inline HTML in PHP)
 - [ ] CSRF validation on all POST requests
+- [ ] Write actions require POST; entry point only merges POST params when method is POST
 - [ ] All pre-commit checks passing
 - [ ] PHPDoc comments with proper type hints
 - [ ] Symfony HTTP Foundation components used throughout
