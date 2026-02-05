@@ -27,6 +27,7 @@ use OpenEMR\Events\Globals\GlobalsInitializedEvent;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 class Bootstrap
 {
@@ -182,6 +183,26 @@ class Bootstrap
     public function getWebroot(): string
     {
         return $this->globalsConfig->getWebroot();
+    }
+
+    /**
+     * Build a generic error response (Twig) for use by any entry point.
+     * Exception messages are not shown to users; log them in the entry point.
+     */
+    public static function createErrorResponse(
+        int $statusCode,
+        Kernel $kernel,
+        string $webroot = ''
+    ): Response {
+        $templatePath = \dirname(__DIR__) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR;
+        $twigContainer = new TwigContainer($templatePath, $kernel);
+        $twig = $twigContainer->getTwig();
+        $content = $twig->render('error.html.twig', [
+            'status_code' => $statusCode,
+            'title' => $statusCode >= 500 ? 'Server Error' : 'Error',
+            'webroot' => $webroot,
+        ]);
+        return new Response($content, $statusCode);
     }
 
     /**

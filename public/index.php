@@ -52,41 +52,29 @@ function run(): void
 
     $controller = $bootstrap->getExampleController();
 
-    $actionParam = $_GET['action'] ?? $_POST['action'] ?? 'list';
+    $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    $actionParam = $_GET['action'] ?? ($requestMethod === 'POST' ? ($_POST['action'] ?? 'list') : 'list');
     $action = is_string($actionParam) ? $actionParam : 'list';
 
-    $params = array_merge($_GET, $_POST);
+    // Only include POST params when method is POST so GET ?action=create&... cannot trigger create
+    $params = $requestMethod === 'POST' ? array_merge($_GET, $_POST) : array_merge($_GET, []);
     $params['_self'] = $_SERVER['PHP_SELF'] ?? '/';
+
+    // Require POST for create action
+    if ($action === 'create' && $requestMethod !== 'POST') {
+        $action = 'list';
+    }
 
     try {
         $response = $controller->dispatch($action, $params);
         $response->send();
     } catch ({ModuleName}HttpExceptionInterface $e) {
         error_log("Module error: " . $e->getMessage());
-        $response = createErrorResponse($e->getStatusCode(), $kernel, $bootstrap->getWebroot());
+        $response = Bootstrap::createErrorResponse($e->getStatusCode(), $kernel, $bootstrap->getWebroot());
         $response->send();
     } catch (\Throwable $e) {
         error_log("Unexpected error: " . $e->getMessage());
-        $response = createErrorResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $kernel, $bootstrap->getWebroot());
+        $response = Bootstrap::createErrorResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $kernel, $bootstrap->getWebroot());
         $response->send();
     }
-}
-
-/**
- * Build a generic error response (Twig) so exception messages are not shown to users.
- */
-function createErrorResponse(
-    int $statusCode,
-    \OpenEMR\Core\Kernel $kernel,
-    string $webroot = ''
-): Response {
-    $templatePath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR;
-    $twigContainer = new \OpenEMR\Common\Twig\TwigContainer($templatePath, $kernel);
-    $twig = $twigContainer->getTwig();
-    $content = $twig->render('error.html.twig', [
-        'status_code' => $statusCode,
-        'title' => $statusCode >= 500 ? 'Server Error' : 'Error',
-        'webroot' => $webroot,
-    ]);
-    return new Response($content, $statusCode);
 }

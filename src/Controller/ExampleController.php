@@ -117,9 +117,9 @@ class ExampleController
             throw new {ModuleName}AccessDeniedException('CSRF token verification failed');
         }
 
-        // Validate input
+        // Validate input ($name === '' to avoid empty() rejecting "0")
         $name = $params['name'] ?? '';
-        if (empty($name)) {
+        if ($name === '') {
             throw new {ModuleName}ValidationException('Name is required');
         }
 
