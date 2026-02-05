@@ -11,7 +11,7 @@
  */
 
 // TEMPLATE: Update namespace to match your module
-namespace {VendorName}\Modules\{ModuleName}\Console\Command;
+namespace OpenCoreEMR\Modules\{ModuleName}\Console\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

@@ -92,7 +92,12 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 │   └── assets/            # Static assets (CSS, JS, images)
 ├── src/
 │   ├── Bootstrap.php      # Module initialization and DI
-│   ├── GlobalsAccessor.php # Globals access wrapper
+│   ├── ConfigAccessorInterface.php  # Configuration access abstraction
+│   ├── ConfigFactory.php            # Factory for config accessor selection
+│   ├── EnvironmentConfigAccessor.php # Env var config (for containers)
+│   ├── GlobalsAccessor.php          # Database-backed config (OpenEMR globals)
+│   ├── GlobalConfig.php             # Centralized configuration wrapper
+│   ├── ModuleAccessGuard.php        # Entry point access guard
 │   ├── Command/           # Console commands (removed after setup)
 │   │   └── SetupCommand.php
 │   ├── Controller/        # Request handlers
@@ -101,11 +106,15 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 │   ├── Service/           # Business logic
 │   │   ├── {Feature}Service.php
 │   │   └── ...
-│   ├── Exception/         # Custom exception types
-│   │   ├── {ModuleName}ExceptionInterface.php
-│   │   ├── {ModuleName}Exception.php
-│   │   └── {Specific}Exception.php
-│   └── GlobalConfig.php   # Configuration wrapper (you create this)
+│   └── Exception/         # Custom exception types
+│       ├── {ModuleName}ExceptionInterface.php
+│       ├── {ModuleName}Exception.php
+│       ├── {ModuleName}NotFoundException.php
+│       ├── {ModuleName}UnauthorizedException.php
+│       ├── {ModuleName}AccessDeniedException.php
+│       ├── {ModuleName}ValidationException.php
+│       ├── {ModuleName}ConfigurationException.php
+│       └── {ModuleName}ApiException.php
 ├── templates/
 │   └── {feature}/
 │       ├── {view}.html.twig
@@ -114,6 +123,97 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 ├── composer.json
 └── openemr.bootstrap.php  # Module loader
 ```
+
+## Configuration Abstraction Layer
+
+The template includes a flexible configuration system that supports both database-backed (OpenEMR globals) and environment variable configurations:
+
+### Key Components
+
+| File | Purpose |
+|------|---------|
+| `ConfigAccessorInterface` | Common interface for all config accessors |
+| `GlobalsAccessor` | Reads config from OpenEMR database globals |
+| `EnvironmentConfigAccessor` | Reads config from environment variables |
+| `ConfigFactory` | Selects the appropriate accessor based on environment |
+| `GlobalConfig` | Centralized wrapper providing typed access to all module config |
+
+### Usage Pattern
+
+```php
+// In Bootstrap or entry points - factory determines config source
+$configAccessor = ConfigFactory::createConfigAccessor();
+$config = new GlobalConfig($configAccessor);
+
+// Use typed getters
+$isEnabled = $config->isEnabled();      // bool
+$apiKey = $config->getApiKey();         // string (decrypted in DB mode)
+```
+
+### Environment Variable Mode
+
+Set `{VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1` to use environment variables instead of database:
+
+```bash
+# Enable env config mode
+export {VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1
+
+# Module configuration
+export {VENDOR_PREFIX}_{MODULENAME}_ENABLED=true
+export {VENDOR_PREFIX}_{MODULENAME}_API_KEY=your-api-key
+```
+
+Benefits:
+- Container-friendly deployments (no database config needed)
+- Secrets can be injected via environment
+- Config is immutable (no admin UI editing)
+
+### Adding New Config Options
+
+1. Add constant in `GlobalConfig`:
+```php
+public const CONFIG_OPTION_API_KEY = '{vendor_prefix}_{modulename}_api_key';
+```
+
+2. Add env var mapping in `EnvironmentConfigAccessor`:
+```php
+private const KEY_MAP = [
+    GlobalConfig::CONFIG_OPTION_API_KEY => '{VENDOR_PREFIX}_{MODULENAME}_API_KEY',
+];
+```
+
+3. Add getter in `GlobalConfig`:
+```php
+public function getApiKey(): string
+{
+    return $this->configAccessor->getString(self::CONFIG_OPTION_API_KEY, '');
+}
+```
+
+4. Add to `getGlobalSettingSectionConfiguration()` for admin UI.
+
+## Module Access Guard
+
+The `ModuleAccessGuard` prevents access to module endpoints when:
+1. Module is not registered in OpenEMR
+2. Module is disabled in module management
+3. Module's own 'enabled' setting is off
+
+```php
+// At top of public entry points. Use return (not exit) to stay consistent with "no exit/die" rules.
+$guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
+if ($guardResponse instanceof Response) {
+    $guardResponse->send();
+    return;
+}
+run();  // Rest of entry logic in a function so the guard can return instead of exit
+```
+
+Returns 404 (not 403) to avoid leaking module presence. Wrapping the rest of the entry point in a function (e.g. `run()`) allows the guard to use `return` instead of `exit`, keeps the template testable, and avoids any exception for "exit in guard only" in the coding standards.
+
+### Authentication and ACL
+
+Entry points load `globals.php`, which typically starts the OpenEMR session. For sensitive operations (create, update, delete, or viewing sensitive data), call OpenEMR's ACL (e.g. `AclMain::aclCheckCore('section', 'action')`) and throw `{ModuleName}UnauthorizedException` or `{ModuleName}AccessDeniedException` if the check fails. The menu item's `acl_req` controls visibility; controllers must enforce the same (or stricter) ACL before performing the action.
 
 ## Public Entry Point Pattern
 
@@ -124,31 +224,56 @@ Public PHP files should be short! Just dispatch a controller and send a response
 /**
  * [Description of endpoint]
  *
- * @package   OpenCoreEMR
+ * @package   {VendorName}
  * @link      http://www.open-emr.org
  * @author    [Author Name] <email@example.com>
- * @copyright Copyright (c) 2025 OpenCoreEMR Inc
+ * @copyright Copyright (c) 2026 {VendorName}
  * @license   GNU General Public License 3
  */
 
+$sessionAllowWrite = true;
+
+// Load module autoloader before globals.php
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../../../../globals.php';
 
 use {VendorName}\Modules\{ModuleName}\Bootstrap;
+use {VendorName}\Modules\{ModuleName}\ConfigFactory;
+use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}ExceptionInterface;
+use {VendorName}\Modules\{ModuleName}\GlobalsAccessor;
+use {VendorName}\Modules\{ModuleName}\ModuleAccessGuard;
+use Symfony\Component\HttpFoundation\Response;
 
-// Get kernel and bootstrap module
-$kernel = $GLOBALS['kernel'];
-$bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel);
+// Check if module is installed and enabled - return 404 if not
+$guardResponse = ModuleAccessGuard::check(Bootstrap::MODULE_NAME);
+if ($guardResponse instanceof Response) {
+    $guardResponse->send();
+    return;
+}
+run();
 
-// Get controller
-$controller = $bootstrap->get{Feature}Controller();
-
-// Determine action
-$action = $_GET['action'] ?? $_POST['action'] ?? 'default';
-
-// Dispatch to controller and send response
-$response = $controller->dispatch($action, $_REQUEST);
-$response->send();
+function run(): void {
+    // Get kernel and bootstrap module
+    $globalsAccessor = new GlobalsAccessor();
+    $kernel = $globalsAccessor->get('kernel');
+    // ... bootstrap, get controller, dispatch ...
+    try {
+        $response = $controller->dispatch($action);
+        $response->send();
+    } catch ({ModuleName}ExceptionInterface $e) {
+        error_log("Module error: " . $e->getMessage());
+        // Use a generic Twig error page; do not show exception messages to users
+        $response = createErrorResponse($e->getStatusCode(), $kernel, $bootstrap->getWebroot());
+        $response->send();
+    } catch (\Throwable $e) {
+        error_log("Unexpected error: " . $e->getMessage());
+        $response = createErrorResponse(Response::HTTP_INTERNAL_SERVER_ERROR, $kernel, $bootstrap->getWebroot());
+        $response->send();
+    }
+}
 ```
+
+In exception handlers, render a generic error template (e.g. `templates/error.html.twig`) instead of echoing exception messages, to avoid leaking implementation details. Log the real message with `error_log()`.
 
 ## Controller Pattern
 
@@ -227,8 +352,9 @@ class {Feature}Controller
             throw new {ModuleName}AccessDeniedException("CSRF token verification failed");
         }
 
-        // Validate input
-        if (empty($params['required_field'])) {
+        // Validate input (use explicit check; avoid empty() which treats "0" as missing)
+        $required = trim($params['required_field'] ?? '');
+        if ($required === '') {
             throw new {ModuleName}ValidationException("Required field is missing");
         }
 
@@ -366,7 +492,7 @@ return new Response($content);
 
 ## Bootstrap Pattern
 
-The `Bootstrap.php` class should provide factory methods for controllers:
+The `Bootstrap.php` class should provide factory methods for controllers and accept an optional `ConfigAccessorInterface`:
 
 ```php
 <?php
@@ -388,9 +514,11 @@ class Bootstrap
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly Kernel $kernel = new Kernel(),
-        private readonly GlobalsAccessor $globals = new GlobalsAccessor()
+        ?ConfigAccessorInterface $configAccessor = null
     ) {
-        $this->globalsConfig = new GlobalConfig($this->globals);
+        // Use factory to determine config source if not provided
+        $configAccessor ??= ConfigFactory::createConfigAccessor();
+        $this->globalsConfig = new GlobalConfig($configAccessor);
 
         $templatePath = \dirname(__DIR__) . DIRECTORY_SEPARATOR . "templates" . DIRECTORY_SEPARATOR;
         $twig = new TwigContainer($templatePath, $this->kernel);
@@ -408,6 +536,27 @@ class Bootstrap
             $this->twig
         );
     }
+}
+```
+
+### Environment Config Mode in Admin UI
+
+When env config mode is enabled, the global settings section displays an informational message instead of editable fields:
+
+```php
+// In addGlobalSettingsSection()
+if ($this->globalsConfig->isEnvConfigMode()) {
+    $setting = new GlobalSetting(
+        xlt('Configuration Managed Externally'),
+        GlobalSetting::DATA_TYPE_HTML_DISPLAY_SECTION,
+        '', '', false
+    );
+    $setting->addFieldOption(
+        GlobalSetting::DATA_TYPE_OPTION_RENDER_CALLBACK,
+        static fn() => xlt('This module is configured via environment variables.')
+    );
+    $service->appendToSection($section, '{vendor_prefix}_{modulename}_env_config_notice', $setting);
+    return;
 }
 ```
 
@@ -532,11 +681,14 @@ Update `.composer-require-checker.json` to whitelist OpenEMR symbols:
 ## Security Checklist
 
 - ✅ Always validate CSRF tokens on POST requests
-- ✅ Check user authentication before sensitive operations
+- ✅ Require POST (or correct method) for write actions; only merge POST into params when method is POST
+- ✅ Check user authentication and ACL before sensitive operations (e.g. `AclMain::aclCheckCore()`); throw UnauthorizedException or AccessDeniedException if denied
 - ✅ Use `realpath()` and path validation to prevent directory traversal
 - ✅ Sanitize all user input in templates (`text`, `attr` filters)
-- ✅ Log security events (failed auth, path traversal attempts)
+- ✅ Log security events (failed auth, path traversal attempts); pass user/sensitive data as structured context (e.g. `['name' => $name]`), not interpolated into the message, to avoid log injection and parsing issues
 - ✅ Never expose detailed error messages to users
+- ✅ Use explicit checks (e.g. `=== ''`, `=== null`) instead of `empty()` for string/ID validation so values like `"0"` are not rejected
+- ✅ Do not redirect to user-supplied URLs; use a server-derived value (e.g. `$_SERVER['PHP_SELF']`) or an allowlist of allowed targets
 
 ## Summary - Quick Checklist
 
@@ -548,6 +700,8 @@ Before considering work complete:
 - [ ] Custom exception hierarchy with interface and getStatusCode()
 - [ ] Twig templates for all HTML (no inline HTML in PHP)
 - [ ] CSRF validation on all POST requests
+- [ ] Write actions require POST; entry point only merges POST params when method is POST
+- [ ] ACL enforced in controller (or entry point) for sensitive actions; no redirect to user-supplied URLs
 - [ ] All pre-commit checks passing
 - [ ] PHPDoc comments with proper type hints
 - [ ] Symfony HTTP Foundation components used throughout
