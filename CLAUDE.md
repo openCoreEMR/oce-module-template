@@ -86,6 +86,7 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 {vendor-prefix}-module-{modulename}/
 ├── bin/
 │   └── setup              # Setup wizard (removed after initial setup)
+├── info.txt               # Module display name for OpenEMR UI (REQUIRED)
 ├── public/
 │   ├── index.php          # Main entry point (25-35 lines)
 │   ├── {feature}.php      # Feature entry points (25-35 lines)
@@ -123,6 +124,68 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 ├── composer.json
 └── openemr.bootstrap.php  # Module loader
 ```
+
+## Module info.txt (REQUIRED)
+
+**Every module MUST have an `info.txt` file.** OpenEMR reads this file to display the module name in the admin UI.
+
+### Format
+
+Single line containing the display name:
+```
+{VendorName} {ModuleName} Module
+```
+
+**Examples:**
+- `OpenCoreEMR Lab Integration Module`
+- `OpenCoreEMR Notification Banner`
+
+### Important Notes
+
+1. **Required file** - If missing, OpenEMR falls back to the directory name (ugly)
+2. **First line only** - Only the first line is used; keep it simple
+3. **No version in name** - Version is tracked separately via `version.php`
+4. **Replace placeholders** - Use the same `{VendorName}` and `{ModuleName}` placeholders as elsewhere
+
+## Versioning with Release Please
+
+Module versions are managed automatically by [Release Please](https://github.com/googleapis/release-please). **Never edit version numbers manually.**
+
+### How It Works
+
+1. Merge PRs with [conventional commit](https://www.conventionalcommits.org/) titles
+2. Release Please creates a release PR with version bumps
+3. When merged, it updates:
+   - `.release-please-manifest.json` - Source of truth for version
+   - `version.php` - PHP version constants for runtime
+   - `CHANGELOG.md` - Generated from commit messages
+
+### Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `release-please-config.json` | Release Please settings and extra-files list |
+| `.release-please-manifest.json` | Current version (updated automatically) |
+| `version.php` | PHP version constants (updated via `extra-files`) |
+
+### Adding Version-Dependent Files
+
+If you add files that need version updates (rare), add them to `release-please-config.json`:
+
+```json
+{
+  "packages": {
+    ".": {
+      "extra-files": [
+        "version.php",
+        "some-other-file.txt"
+      ]
+    }
+  }
+}
+```
+
+Release Please uses the [generic updater](https://github.com/googleapis/release-please/blob/main/docs/customizing.md#updating-arbitrary-files) to find and replace version patterns like `x]x.y.z` in extra files.
 
 ## Configuration Abstraction Layer
 
@@ -716,15 +779,7 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`
 
 CI verifies all symbols are declared as dependencies.
 
-**When using new OpenEMR classes**, add to `.composer-require-checker.json`:
-
-```json
-{
-  "symbol-whitelist": [
-    "OpenEMR\\Services\\SomeNewService"
-  ]
-}
-```
+**When using new OpenEMR classes:** The `symbol-whitelist` in `.composer-require-checker.json` contains OpenEMR classes that are provided at runtime but can't be declared as composer dependencies. **Ask the user before adding new entries** - they may know a better solution.
 
 **When using PHP extensions** (e.g., `ctype_digit`, `curl_*`), add to `composer.json`:
 
@@ -751,6 +806,25 @@ This runs:
 - ✅ PHPStan Static Analysis
 - ✅ Rector
 - ✅ Composer Require Checker
+
+### CRITICAL: Handling Errors and Warnings
+
+**NEVER ignore errors or warnings from any check.** Make every effort to fix them properly.
+
+**Forbidden shortcuts (require explicit user approval):**
+- Adding entries to `symbol-whitelist` in `.composer-require-checker.json`
+- Adding entries to a PHPStan baseline file
+- Using `@phpstan-ignore-*` annotations
+- Using `// phpcs:ignore` comments
+- Suppressing warnings with `@SuppressWarnings`
+
+If you believe a suppression is genuinely necessary, **ask the user first** and explain why the error cannot be fixed properly. The user may know a better solution or may approve the exception.
+
+**The right approach:**
+1. Understand what the error is telling you
+2. Fix the root cause (add missing types, fix logic, add dependencies)
+3. If stuck, ask the user for guidance
+4. Only suppress with explicit user approval and a comment explaining why
 
 ### Common Quality Issues to Avoid
 
@@ -784,7 +858,7 @@ Always include these in `composer.json`:
 
 ## Composer Require Checker Configuration
 
-Update `.composer-require-checker.json` to whitelist OpenEMR symbols:
+The template includes a base `.composer-require-checker.json` with common OpenEMR symbols. **Do not add new entries without user approval** - see "Handling Errors and Warnings" above.
 
 ```json
 {
