@@ -1,0 +1,1 @@
+{VendorName} {ModuleName} Module
