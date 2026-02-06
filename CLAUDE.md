@@ -170,19 +170,23 @@ Benefits:
 
 ### Adding New Config Options
 
+**IMPORTANT:** All module config settings MUST be accessible via both environment variables AND OpenEMR globals. This is mandatory even if the module initially has no config options—when you add config later, use the abstraction layer properly.
+
+**Never check settings directly** (e.g., `getenv()` or `$GLOBALS[]`). Always use the config abstraction:
+
 1. Add constant in `GlobalConfig`:
 ```php
 public const CONFIG_OPTION_API_KEY = '{vendor_prefix}_{modulename}_api_key';
 ```
 
-2. Add env var mapping in `EnvironmentConfigAccessor`:
+2. Add env var mapping in `EnvironmentConfigAccessor::KEY_MAP`:
 ```php
 private const KEY_MAP = [
     GlobalConfig::CONFIG_OPTION_API_KEY => '{VENDOR_PREFIX}_{MODULENAME}_API_KEY',
 ];
 ```
 
-3. Add getter in `GlobalConfig`:
+3. Add typed getter in `GlobalConfig`:
 ```php
 public function getApiKey(): string
 {
@@ -190,7 +194,53 @@ public function getApiKey(): string
 }
 ```
 
-4. Add to `getGlobalSettingSectionConfiguration()` for admin UI.
+4. Register the global setting in `Bootstrap::registerGlobalSettings()` for admin UI.
+
+5. Use the getter in your code:
+```php
+// Correct - uses abstraction
+$apiKey = $this->config->getApiKey();
+
+// WRONG - bypasses abstraction
+$apiKey = getenv('MYMODULE_API_KEY') ?: $GLOBALS['mymodule_api_key'];
+```
+
+The `EnvironmentConfigAccessor` automatically checks env vars first and falls back to globals, so both access methods work through the same abstraction.
+
+### Environment Config Mode in Admin UI
+
+When env config mode is enabled (`{VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1`), the global settings section must display an informational message instead of editable fields:
+
+```php
+public function registerGlobalSettings(GlobalsInitializedEvent $event): void
+{
+    $service = $event->getGlobalsService();
+    $section = xlt('My Module');
+    $service->createSection($section);
+
+    // In env config mode, show informational message instead of editable fields
+    if ($this->globalsConfig->isEnvConfigMode()) {
+        $setting = new GlobalSetting(
+            xlt('Configuration Managed Externally'),
+            GlobalSetting::DATA_TYPE_HTML_DISPLAY_SECTION,
+            '',
+            '',
+            false
+        );
+        $setting->addFieldOption(
+            GlobalSetting::DATA_TYPE_OPTION_RENDER_CALLBACK,
+            static fn() => xlt('This module is managed by deployment administrators.')
+        );
+        $service->appendToSection($section, '{vendor_prefix}_{modulename}_env_config_notice', $setting);
+        return;
+    }
+
+    // Normal mode: register editable settings
+    // ...
+}
+```
+
+This prevents confusion when admins see config fields that have no effect because the module reads from environment variables instead.
 
 ## Module Access Guard
 
