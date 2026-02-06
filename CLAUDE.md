@@ -779,15 +779,7 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`
 
 CI verifies all symbols are declared as dependencies.
 
-**When using new OpenEMR classes**, add to `.composer-require-checker.json`:
-
-```json
-{
-  "symbol-whitelist": [
-    "OpenEMR\\Services\\SomeNewService"
-  ]
-}
-```
+**When using new OpenEMR classes:** The `symbol-whitelist` in `.composer-require-checker.json` contains OpenEMR classes that are provided at runtime but can't be declared as composer dependencies. **Ask the user before adding new entries** - they may know a better solution.
 
 **When using PHP extensions** (e.g., `ctype_digit`, `curl_*`), add to `composer.json`:
 
@@ -814,6 +806,25 @@ This runs:
 - ✅ PHPStan Static Analysis
 - ✅ Rector
 - ✅ Composer Require Checker
+
+### CRITICAL: Handling Errors and Warnings
+
+**NEVER ignore errors or warnings from any check.** Make every effort to fix them properly.
+
+**Forbidden shortcuts (require explicit user approval):**
+- Adding entries to `symbol-whitelist` in `.composer-require-checker.json`
+- Adding entries to a PHPStan baseline file
+- Using `@phpstan-ignore-*` annotations
+- Using `// phpcs:ignore` comments
+- Suppressing warnings with `@SuppressWarnings`
+
+If you believe a suppression is genuinely necessary, **ask the user first** and explain why the error cannot be fixed properly. The user may know a better solution or may approve the exception.
+
+**The right approach:**
+1. Understand what the error is telling you
+2. Fix the root cause (add missing types, fix logic, add dependencies)
+3. If stuck, ask the user for guidance
+4. Only suppress with explicit user approval and a comment explaining why
 
 ### Common Quality Issues to Avoid
 
@@ -847,7 +858,7 @@ Always include these in `composer.json`:
 
 ## Composer Require Checker Configuration
 
-Update `.composer-require-checker.json` to whitelist OpenEMR symbols:
+The template includes a base `.composer-require-checker.json` with common OpenEMR symbols. **Do not add new entries without user approval** - see "Handling Errors and Warnings" above.
 
 ```json
 {
