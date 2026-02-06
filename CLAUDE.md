@@ -651,6 +651,94 @@ Templates should use OpenEMR's translation and sanitization filters:
 - `attr` - Sanitize for HTML attributes
 - `xlj` - Translate and JSON-encode for JavaScript
 
+## Development Workflow
+
+Use the **Taskfile** for Docker and module operations. Install: `brew install go-task`
+
+### Starting Development
+
+```bash
+task dev:start          # Start Docker environment
+task module:install     # Install and enable module in OpenEMR
+task dev:browse         # Open OpenEMR in browser
+```
+
+### Common Commands
+
+```bash
+task dev:port           # Show assigned ports
+task dev:logs           # View OpenEMR logs
+task dev:shell          # Shell into OpenEMR container
+task dev:stop           # Stop Docker (keeps data)
+task dev:reset          # Reset all data (fresh start)
+```
+
+### Module Management
+
+```bash
+task module:list        # List all modules
+task module:disable     # Disable module
+task module:reinstall   # Unregister and reinstall
+```
+
+### Code Quality
+
+```bash
+task check              # Run all checks (pre-commit)
+composer check          # Run composer-based checks only
+composer phpstan        # PHPStan at level 10
+composer test           # Run PHPUnit tests
+```
+
+## CI Checks
+
+GitHub Actions runs these checks on every PR.
+
+### Conventional Commit Titles (IMPORTANT)
+
+PR titles **must** follow conventional commits with **lowercase subject**:
+
+```
+type: lowercase description
+```
+
+**Correct:**
+- `fix: resolve phpstan errors`
+- `feat: add user authentication`
+- `docs: update readme`
+
+**Wrong (will fail CI):**
+- `fix: Resolve PHPStan errors` ← uppercase
+- `Fix: resolve errors` ← uppercase type
+- `resolve phpstan errors` ← missing type
+
+Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`, `deps`
+
+### Composer Require Checker
+
+CI verifies all symbols are declared as dependencies.
+
+**When using new OpenEMR classes**, add to `.composer-require-checker.json`:
+
+```json
+{
+  "symbol-whitelist": [
+    "OpenEMR\\Services\\SomeNewService"
+  ]
+}
+```
+
+**When using PHP extensions** (e.g., `ctype_digit`, `curl_*`), add to `composer.json`:
+
+```json
+{
+  "require": {
+    "ext-ctype": "*",
+    "ext-curl": "*"
+  }
+}
+```
+
 ## Code Quality Standards
 
 All code must pass these checks:
