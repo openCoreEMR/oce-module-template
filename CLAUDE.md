@@ -96,8 +96,10 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 │   ├── ConfigAccessorInterface.php  # Configuration access abstraction
 │   ├── ConfigFactory.php            # Factory for config accessor selection
 │   ├── EnvironmentConfigAccessor.php # Env var config (for containers)
+│   ├── FileConfigAccessor.php       # YAML file config (for K8s)
 │   ├── GlobalsAccessor.php          # Database-backed config (OpenEMR globals)
 │   ├── GlobalConfig.php             # Centralized configuration wrapper
+│   ├── YamlConfigLoader.php         # YAML file parsing and merging
 │   ├── ModuleAccessGuard.php        # Entry point access guard
 │   ├── Command/           # Console commands (removed after setup)
 │   │   └── SetupCommand.php
@@ -189,7 +191,7 @@ Release Please uses the [generic updater](https://github.com/googleapis/release-
 
 ## Configuration Abstraction Layer
 
-The template includes a flexible configuration system that supports both database-backed (OpenEMR globals) and environment variable configurations:
+The template includes a flexible configuration system that supports database-backed globals, environment variables, and YAML file-based configuration:
 
 ### Key Components
 
@@ -198,6 +200,8 @@ The template includes a flexible configuration system that supports both databas
 | `ConfigAccessorInterface` | Common interface for all config accessors |
 | `GlobalsAccessor` | Reads config from OpenEMR database globals |
 | `EnvironmentConfigAccessor` | Reads config from environment variables |
+| `FileConfigAccessor` | Reads config from YAML files with env var overrides |
+| `YamlConfigLoader` | Parses YAML config files, processes imports, merges |
 | `ConfigFactory` | Selects the appropriate accessor based on environment |
 | `GlobalConfig` | Centralized wrapper providing typed access to all module config |
 
@@ -231,9 +235,44 @@ Benefits:
 - Secrets can be injected via environment
 - Config is immutable (no admin UI editing)
 
+### YAML File-Based Configuration Mode
+
+For Kubernetes-style deployments, modules support YAML config files mounted via ConfigMap and Secret volumes. This is the preferred approach for K8s because it maps directly to volume mounts.
+
+**Config files (conventional paths):**
+- `/etc/oce/{modulename}/config.yaml` — non-sensitive settings (from ConfigMap)
+- `/etc/oce/{modulename}/secrets.yaml` — sensitive settings (from Secret)
+
+**Override paths via env vars:**
+- `{VENDOR_PREFIX}_{MODULENAME}_CONFIG_FILE` — custom path to config file
+- `{VENDOR_PREFIX}_{MODULENAME}_SECRETS_FILE` — custom path to secrets file
+
+**Example config.yaml:**
+```yaml
+enabled: true
+api_key: "your-api-key"
+region: us
+```
+
+**Example secrets.yaml:**
+```yaml
+api_secret: "your-api-secret"
+```
+
+**Precedence:** env vars > YAML files > database globals
+
+The module auto-detects file presence — no activation flag needed. When config files are present, the admin UI shows "Configuration Managed Externally" instead of editable fields.
+
+**Imports:** Config files support Symfony-style imports for splitting across files:
+```yaml
+imports:
+  - { resource: secrets.yaml }
+enabled: true
+```
+
 ### Adding New Config Options
 
-**IMPORTANT:** All module config settings MUST be accessible via both environment variables AND OpenEMR globals. This is mandatory even if the module initially has no config options—when you add config later, use the abstraction layer properly.
+**IMPORTANT:** All module config settings MUST be accessible via all three config modes (YAML files, environment variables, AND OpenEMR globals). When you add a new config option, update all the relevant files:
 
 **Never check settings directly** (e.g., `getenv()` or `$GLOBALS[]`). Always use the config abstraction:
 
@@ -249,7 +288,19 @@ private const KEY_MAP = [
 ];
 ```
 
-3. Add typed getter in `GlobalConfig`:
+3. Add YAML key mapping in `FileConfigAccessor::KEY_MAP`, `ENV_OVERRIDE_MAP`, and `REVERSE_KEY_MAP`:
+```php
+// KEY_MAP: short YAML key => internal config key
+'api_key' => GlobalConfig::CONFIG_OPTION_API_KEY,
+
+// ENV_OVERRIDE_MAP: internal key => env var name
+GlobalConfig::CONFIG_OPTION_API_KEY => '{VENDOR_PREFIX}_{MODULENAME}_API_KEY',
+
+// REVERSE_KEY_MAP: internal key => short YAML key
+GlobalConfig::CONFIG_OPTION_API_KEY => 'api_key',
+```
+
+4. Add typed getter in `GlobalConfig`:
 ```php
 public function getApiKey(): string
 {
@@ -257,9 +308,9 @@ public function getApiKey(): string
 }
 ```
 
-4. Register the global setting in `Bootstrap::registerGlobalSettings()` for admin UI.
+5. Register the global setting in `Bootstrap::addGlobalSettingsSection()` for admin UI.
 
-5. Use the getter in your code:
+6. Use the getter in your code:
 ```php
 // Correct - uses abstraction
 $apiKey = $this->config->getApiKey();
@@ -268,9 +319,9 @@ $apiKey = $this->config->getApiKey();
 $apiKey = getenv('MYMODULE_API_KEY') ?: $GLOBALS['mymodule_api_key'];
 ```
 
-The `EnvironmentConfigAccessor` automatically checks env vars first and falls back to globals, so both access methods work through the same abstraction.
+The config accessors handle precedence automatically: `FileConfigAccessor` checks env vars then YAML data, `EnvironmentConfigAccessor` checks env vars then falls back to globals.
 
-### Environment Config Mode in Admin UI
+### External Config Mode in Admin UI
 
 When env config mode is enabled (`{VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1`), the global settings section must display an informational message instead of editable fields:
 
@@ -282,7 +333,7 @@ public function registerGlobalSettings(GlobalsInitializedEvent $event): void
     $service->createSection($section);
 
     // In env config mode, show informational message instead of editable fields
-    if ($this->globalsConfig->isEnvConfigMode()) {
+    if ($this->globalsConfig->isExternalConfigMode()) {
         $setting = new GlobalSetting(
             xlt('Configuration Managed Externally'),
             GlobalSetting::DATA_TYPE_HTML_DISPLAY_SECTION,
@@ -652,13 +703,13 @@ class Bootstrap
 }
 ```
 
-### Environment Config Mode in Admin UI
+### External Config Mode in Admin UI
 
 When env config mode is enabled, the global settings section displays an informational message instead of editable fields:
 
 ```php
 // In addGlobalSettingsSection()
-if ($this->globalsConfig->isEnvConfigMode()) {
+if ($this->globalsConfig->isExternalConfigMode()) {
     $setting = new GlobalSetting(
         xlt('Configuration Managed Externally'),
         GlobalSetting::DATA_TYPE_HTML_DISPLAY_SECTION,

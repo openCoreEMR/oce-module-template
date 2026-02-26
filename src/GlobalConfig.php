@@ -19,12 +19,12 @@ use OpenEMR\Services\Globals\GlobalSetting;
 
 class GlobalConfig
 {
-    private readonly bool $isEnvConfigMode;
+    private readonly bool $isExternalConfigMode;
 
     public function __construct(
         private readonly ConfigAccessorInterface $configAccessor = new GlobalsAccessor()
     ) {
-        $this->isEnvConfigMode = $configAccessor instanceof EnvironmentConfigAccessor;
+        $this->isExternalConfigMode = ConfigFactory::isExternalConfigMode();
     }
 
     /**
@@ -38,11 +38,11 @@ class GlobalConfig
     // public const CONFIG_OPTION_API_SECRET = '{vendor_prefix}_{modulename}_api_secret';
 
     /**
-     * Check if configuration is managed via environment variables
+     * Check if configuration is managed externally (file or env vars)
      */
-    public function isEnvConfigMode(): bool
+    public function isExternalConfigMode(): bool
     {
-        return $this->isEnvConfigMode;
+        return $this->isExternalConfigMode;
     }
 
     /**
@@ -81,8 +81,8 @@ class GlobalConfig
     // {
     //     $value = $this->configAccessor->getString(self::CONFIG_OPTION_API_SECRET, '');
     //     if ($value !== '' && $value !== '0') {
-    //         // In env config mode, secrets are stored as plaintext (no encryption)
-    //         if ($this->isEnvConfigMode) {
+    //         // In external config mode, secrets are stored as plaintext (no encryption)
+    //         if ($this->isExternalConfigMode) {
     //             return $value;
     //         }
     //         // In database mode, decrypt the value

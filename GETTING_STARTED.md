@@ -68,7 +68,12 @@ Files that contain placeholders:
 - `phpcs.xml`
 - `openemr.bootstrap.php`
 - `src/Bootstrap.php`
+- `src/ConfigFactory.php`
+- `src/EnvironmentConfigAccessor.php`
+- `src/FileConfigAccessor.php`
+- `src/GlobalConfig.php`
 - `src/GlobalsAccessor.php`
+- `src/YamlConfigLoader.php`
 - `README.md`
 - `CLAUDE.md`
 
