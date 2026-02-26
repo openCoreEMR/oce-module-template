@@ -20,6 +20,8 @@ services:
     ports: !override
     - "127.0.0.1::80"
     - "127.0.0.1::443"
+    environment:
+      OPENEMR_DISABLE_TELEMETRY: "true"
     healthcheck:
       test: ["CMD", "curl", "-fsk", "https://localhost:443/"]
       interval: 10s
