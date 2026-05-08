@@ -47,28 +47,28 @@ repos:
   hooks:
   - id: php-syntax-check
     name: PHP Syntax Check
-    entry: php -l
+    entry: bin/precommit-template-guard.sh php -l
     language: system
     types:
     - php
 
   - id: composer-validate
     name: Validate composer.json
-    entry: composer validate --strict
+    entry: bin/precommit-template-guard.sh composer validate --strict
     language: system
     files: ^composer\.json$
     pass_filenames: false
 
   - id: composer-normalize
     name: Normalize composer.json
-    entry: composer normalize
+    entry: bin/precommit-template-guard.sh composer normalize
     language: system
     files: ^composer\.json$
     pass_filenames: false
 
   - id: phpcbf
     name: PHP Code Beautifier and Fixer
-    entry: composer run-script phpcbf
+    entry: bin/precommit-template-guard.sh composer run-script phpcbf
     language: system
     types:
     - php
@@ -76,7 +76,7 @@ repos:
 
   - id: phpcs
     name: PHP_CodeSniffer
-    entry: composer run-script phpcs
+    entry: bin/precommit-template-guard.sh composer run-script phpcs
     language: system
     types:
     - php
@@ -84,7 +84,7 @@ repos:
 
   - id: phpstan
     name: PHPStan Static Analysis
-    entry: composer run-script phpstan
+    entry: bin/precommit-template-guard.sh composer run-script phpstan
     language: system
     types:
     - php
@@ -92,7 +92,7 @@ repos:
 
   - id: rector
     name: Rector
-    entry: composer run-script rector-fix
+    entry: bin/precommit-template-guard.sh composer run-script rector-fix
     language: system
     types:
     - php
@@ -100,7 +100,7 @@ repos:
 
   - id: composer-require-checker
     name: Composer Require Checker
-    entry: composer run-script require-checker
+    entry: bin/precommit-template-guard.sh composer run-script require-checker
     language: system
     files: ^(composer\.json|src/.+\.php)$
     pass_filenames: false

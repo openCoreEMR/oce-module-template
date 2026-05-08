@@ -27,8 +27,13 @@ git init
 ### 2. Install Dependencies
 
 ```bash
-composer install
+composer install                                # module dependencies
+composer install --working-dir=tools/openemr    # OpenEMR source for PHPStan + Docker bind mount
 ```
+
+OpenEMR source is intentionally **not** a runtime dependency of the module — it lives under `tools/openemr/vendor/openemr/openemr/` instead of the root `vendor/`. See [`tools/openemr/README.md`](tools/openemr/README.md) for the why.
+
+(Or just run `task setup`, which does both installs and brings up Docker.)
 
 ### 3. Run the Setup Wizard (Recommended)
 
