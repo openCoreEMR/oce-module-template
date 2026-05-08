@@ -72,6 +72,15 @@ When creating a new module from this template, use consistent naming:
 - Avoid redundant words like "openemr" or "module" in the functional name
 - Internal modules use `oce-` prefix, external/community modules use `oe-` prefix
 
+## OpenEMR source lives under `tools/openemr/`, not `vendor/`
+
+OpenEMR is intentionally NOT a runtime dependency of generated modules. Its source tree is installed at `tools/openemr/vendor/openemr/openemr/` via a sub-composer (`tools/openemr/composer.json`) and made available to:
+
+- **PHPStan** — `phpstan.neon` loads `tools/openemr/vendor/autoload.php` via `bootstrapFiles`
+- **Local Docker dev** — `compose.yml` extends OpenEMR's `development-easy` compose file from `tools/openemr/vendor/openemr/openemr/docker/...`
+
+Do **not** add `openemr/openemr` to the root `composer.json`. If you do, the module's `vendor/autoload.php` will register a competing PSR-4 mapping for `OpenEMR\\` → our vendor's `src/`, classes will resolve to our copy, and `__DIR__`-relative `require_once` inside those classes will re-load procedural files under a different path → fatal `Cannot redeclare …` on patient demographics and elsewhere. See [`tools/openemr/README.md`](tools/openemr/README.md) for the full root-cause analysis.
+
 ## Module Architecture Overview
 
 OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
