@@ -23,7 +23,7 @@ on:
 jobs:
   composer-require-checker:
     if: ${{ !github.event.repository.is_template }}
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
     with:
       name: Run Composer Require Checker
       run: composer require-checker

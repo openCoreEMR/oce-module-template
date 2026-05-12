@@ -11,4 +11,4 @@ on:
 jobs:
   test:
     if: ${{ !github.event.repository.is_template }}
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@0.0.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@0.0.4
