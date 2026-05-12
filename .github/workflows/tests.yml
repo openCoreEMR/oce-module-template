@@ -4,25 +4,11 @@ on:
   push:
     branches:
     - main
-    paths:
-    - '**.php'
-    - composer.json
-    - composer.lock
-    - phpunit.xml
-    - phpunit.xml.dist
-    - .github/workflows/tests.yml
   pull_request:
     branches:
     - main
-    paths:
-    - '**.php'
-    - composer.json
-    - composer.lock
-    - phpunit.xml
-    - phpunit.xml.dist
-    - .github/workflows/tests.yml
 
 jobs:
   test:
     if: ${{ !github.event.repository.is_template }}
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@0.0.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@0.0.4
