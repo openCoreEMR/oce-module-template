@@ -48,7 +48,9 @@
     "text",
     "date",
     "ModuleManagerListener",
-    "{VendorName}\\Modules\\{ModuleName}\\GlobalConfig"
+    "{VendorName}\\Modules\\{ModuleName}\\GlobalConfig",
+    "Google\\Cloud\\SecretManager\\V1\\Client\\SecretManagerServiceClient",
+    "Google\\Cloud\\SecretManager\\V1\\AccessSecretVersionRequest"
   ],
   "php-core-extensions": [
     "Core",
