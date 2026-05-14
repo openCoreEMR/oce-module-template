@@ -1,6 +1,8 @@
 # OpenEMR Module Template
 
 This is a template repository for creating OpenEMR modules using OpenCoreEMR's architectural patterns and best practices.
+<!-- auto-merge smoke test: required-checks-paths -->
+
 
 ## What This Template Provides
 
