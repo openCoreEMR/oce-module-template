@@ -14,7 +14,7 @@ on:
 jobs:
   composer-validate:
     if: ${{ !github.event.repository.is_template }}
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.5
     with:
       name: Validate composer.json
       run: composer validate --strict
