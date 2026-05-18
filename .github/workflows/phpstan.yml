@@ -19,7 +19,7 @@ on:
 jobs:
   phpstan:
     if: ${{ !github.event.repository.is_template }}
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.5
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.6
     with:
       name: Run PHPStan
       run: composer phpstan
