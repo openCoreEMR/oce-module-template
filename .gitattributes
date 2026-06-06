@@ -22,3 +22,10 @@
 /GETTING_STARTED.md export-ignore
 /.release-please-manifest.json export-ignore
 /release-please-config.json export-ignore
+/.composer-require-checker.json export-ignore
+/.dclintrc.yaml export-ignore
+/.yamlfmt export-ignore
+/CLAUDE.md export-ignore
+/bin/setup export-ignore
+/bin/precommit-template-guard.sh export-ignore
+/tools/ export-ignore
