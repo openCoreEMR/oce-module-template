@@ -12,3 +12,6 @@ jobs:
   test:
     if: ${{ !github.event.repository.is_template }}
     uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@1.0.0
+    with:
+      php-versions: '["8.5"]'
+      coverage-php-version: '8.5'

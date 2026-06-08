@@ -15,8 +15,12 @@ on:
 jobs:
   php-syntax-check:
     if: ${{ !github.event.repository.is_template }}
+    strategy:
+      matrix:
+        php-version: ['8.5']
     uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.0.0
     with:
       name: PHP Syntax Check
       run: composer php-lint
       install-deps: false
+      php-version: ${{ matrix.php-version }}
