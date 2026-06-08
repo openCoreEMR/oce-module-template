@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.5-cli@sha256:ed47882f75aed5a761ffcf222739b09a930effd8b815309faa1f7e80f094067b
 
 # Install system dependencies
 # hadolint ignore=DL3008
@@ -17,7 +17,7 @@ EOF
 RUN docker-php-ext-install zip bcmath intl
 
 # Install Xdebug for code coverage
-RUN pecl install xdebug-3.3.2 \
+RUN pecl install xdebug-3.5.1 \
  && docker-php-ext-enable xdebug
 
 # Configure Xdebug for coverage only (not debugging)

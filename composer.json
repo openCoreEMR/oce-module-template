@@ -23,7 +23,7 @@
     "source": "https://github.com/opencoreemr/oce-module-template"
   },
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.5",
     "ext-filter": "*",
     "openemr/oe-module-installer-plugin": "^0.1.5",
     "psr/log": "^1.0 || ^2.0 || ^3.0",
