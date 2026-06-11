@@ -415,6 +415,7 @@ use {VendorName}\Modules\{ModuleName}\ConfigFactory;
 use {VendorName}\Modules\{ModuleName}\Exception\{ModuleName}ExceptionInterface;
 use {VendorName}\Modules\{ModuleName}\GlobalsAccessor;
 use {VendorName}\Modules\{ModuleName}\ModuleAccessGuard;
+use OpenEMR\Common\Session\SessionWrapperFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 // Check if module is installed and enabled - return 404 if not
@@ -429,7 +430,10 @@ function run(): void {
     // Get kernel and bootstrap module
     $globalsAccessor = new GlobalsAccessor();
     $kernel = $globalsAccessor->get('kernel');
-    // ... bootstrap, get controller, dispatch ...
+    // globals.php establishes the active session via the SessionWrapperFactory;
+    // pass it to the controller factory so CsrfUtils (OpenEMR 8.1+) has a session.
+    $session = SessionWrapperFactory::getInstance()->getActiveSession();
+    // ... bootstrap, get controller (passing $session), dispatch ...
     try {
         $response = $controller->dispatch($action);
         $response->send();
@@ -471,6 +475,7 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\SystemLogger;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Twig\Environment;
 
 class {Feature}Controller
@@ -480,7 +485,8 @@ class {Feature}Controller
     public function __construct(
         private readonly GlobalConfig $config,
         private readonly {Feature}Service $service,
-        private readonly Environment $twig
+        private readonly Environment $twig,
+        private readonly SessionInterface $session
     ) {
         $this->logger = new SystemLogger();
     }
@@ -509,7 +515,7 @@ class {Feature}Controller
 
         $content = $this->twig->render('{feature}/list.html.twig', [
             'items' => $items,
-            'csrf_token' => CsrfUtils::collectCsrfToken(),
+            'csrf_token' => CsrfUtils::collectCsrfToken($this->session),
         ]);
 
         return new Response($content);
@@ -521,7 +527,7 @@ class {Feature}Controller
     private function handleCreate(array $params): Response
     {
         // Validate CSRF
-        if (!CsrfUtils::verifyCsrfToken($params['csrf_token'] ?? '')) {
+        if (!CsrfUtils::verifyCsrfToken($params['csrf_token'] ?? '', $this->session)) {
             throw new {ModuleName}AccessDeniedException("CSRF token verification failed");
         }
 
@@ -676,6 +682,7 @@ use {VendorName}\Modules\{ModuleName}\Controller\{Feature}Controller;
 use {VendorName}\Modules\{ModuleName}\Service\{Feature}Service;
 use OpenEMR\Core\Kernel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class Bootstrap
 {
@@ -700,13 +707,18 @@ class Bootstrap
 
     /**
      * Get {Feature}Controller instance
+     *
+     * The active session is supplied by the entry point (via
+     * SessionWrapperFactory) and threaded to CsrfUtils, which requires a
+     * SessionInterface on OpenEMR 8.1+.
      */
-    public function get{Feature}Controller(): {Feature}Controller
+    public function get{Feature}Controller(SessionInterface $session): {Feature}Controller
     {
         return new {Feature}Controller(
             $this->globalsConfig,
             new {Feature}Service($this->globalsConfig),
-            $this->twig
+            $this->twig,
+            $session
         );
     }
 }

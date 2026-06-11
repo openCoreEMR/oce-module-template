@@ -16,6 +16,9 @@ on:
     branches:
     - main
 
+permissions:
+  contents: read
+
 jobs:
   phpstan:
     if: ${{ !github.event.repository.is_template }}
@@ -27,3 +30,10 @@ jobs:
       name: Run PHPStan
       run: composer phpstan
       php-version: ${{ matrix.php-version }}
+      # `composer phpstan` installs tools/openemr, which now pins the private
+      # openemr-internal oce-810 core (the 8.1 CsrfUtils signature). Mint an App
+      # token so `composer install` can clone it.
+      private-repos: openemr-internal
+    secrets:
+      app-id: ${{ secrets.OPENEMR_INTERNAL_CLIENT_ID }}
+      app-private-key: ${{ secrets.OPENEMR_INTERNAL_APP_PRIVATE_KEY }}
