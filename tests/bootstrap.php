@@ -33,6 +33,14 @@ require_once __DIR__ . '/Mocks/MockPatientDocumentEvent.php';
 require_once __DIR__ . '/Mocks/MockGlobalsAccessor.php';
 require_once __DIR__ . '/Mocks/MockEnvironmentConfigAccessor.php';
 
+// Alias the namespaced mock to the global \Document that OpenEMR provides at
+// runtime. Done via class_alias (not a global class declaration) so static
+// analyzers running over an installed OpenEMR tree never see a competing
+// \Document definition.
+if (!class_exists('Document', false)) {
+    class_alias(\OpenCoreEMR\Modules\{ModuleName}\Tests\Mocks\MockDocument::class, 'Document');
+}
+
 // Define OpenEMR global functions used in controllers
 if (!function_exists('xlt')) {
     /**

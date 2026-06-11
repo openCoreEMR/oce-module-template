@@ -36,6 +36,11 @@ parameters:
         -
             message: '#unknown class OpenEMR\\#'
             reportUnmatched: false
+        # OpenEMR's global \Document class is unknown during standalone analysis
+        # (it only exists once the module is installed into an OpenEMR tree).
+        -
+            message: '#class Document#'
+            reportUnmatched: false
         -
             message: '#Instantiated class OpenEMR\\#'
             reportUnmatched: false
