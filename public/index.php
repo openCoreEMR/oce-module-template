@@ -25,6 +25,7 @@ use OpenCoreEMR\Modules\{ModuleName}\ConfigFactory;
 use OpenCoreEMR\Modules\{ModuleName}\Exception\{ModuleName}HttpExceptionInterface;
 use OpenCoreEMR\Modules\{ModuleName}\GlobalsAccessor;
 use OpenCoreEMR\Modules\{ModuleName}\ModuleAccessGuard;
+use OpenEMR\Common\Session\SessionWrapperFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 // Check if module is installed and enabled - return 404 if not
@@ -50,7 +51,10 @@ function run(): void
     $configAccessor = ConfigFactory::createConfigAccessor();
     $bootstrap = new Bootstrap($kernel->getEventDispatcher(), $kernel, $configAccessor);
 
-    $controller = $bootstrap->getExampleController();
+    // globals.php establishes the active session via the SessionWrapperFactory;
+    // the controller threads it to CsrfUtils (required on OpenEMR 8.1+).
+    $session = SessionWrapperFactory::getInstance()->getActiveSession();
+    $controller = $bootstrap->getExampleController($session);
 
     $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $actionParam = $_GET['action'] ?? ($requestMethod === 'POST' ? ($_POST['action'] ?? 'list') : 'list');

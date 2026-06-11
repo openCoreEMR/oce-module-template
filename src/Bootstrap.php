@@ -28,6 +28,7 @@ use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Services\Globals\GlobalSetting;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class Bootstrap
 {
@@ -209,12 +210,16 @@ class Bootstrap
      * Get ExampleController instance
      *
      * Factory method for creating the controller with all dependencies.
+     * The active session is supplied by the entry point (via
+     * SessionWrapperFactory) and threaded to CsrfUtils, which requires a
+     * SessionInterface on OpenEMR 8.1+.
      */
-    public function getExampleController(): ExampleController
+    public function getExampleController(SessionInterface $session): ExampleController
     {
         return new ExampleController(
             $this->globalsConfig,
-            $this->twig
+            $this->twig,
+            $session
         );
     }
 
@@ -222,14 +227,16 @@ class Bootstrap
      * Factory method template for your controllers
      *
      * Add factory methods here to create controller instances with proper dependencies.
+     * Pass the active SessionInterface through when a controller needs CSRF tokens.
      * Example:
      *
-     * public function getYourFeatureController(): YourFeatureController
+     * public function getYourFeatureController(SessionInterface $session): YourFeatureController
      * {
      *     return new YourFeatureController(
      *         $this->globalsConfig,
      *         new YourFeatureService($this->globalsConfig),
-     *         $this->twig
+     *         $this->twig,
+     *         $session
      *     );
      * }
      */

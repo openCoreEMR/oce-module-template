@@ -12,19 +12,24 @@
 
 namespace OpenEMR\Common\Csrf;
 
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+
 /**
- * Mock CsrfUtils to avoid CSRF checks during tests
+ * Mock CsrfUtils to avoid CSRF checks during tests.
+ *
+ * The signatures mirror the real OpenEMR 8.1+ CsrfUtils, which takes a
+ * SessionInterface, so the double matches the contract the controller calls.
  */
 class CsrfUtils
 {
     private static bool $verifyResult = true;
 
-    public static function collectCsrfToken(): string
+    public static function collectCsrfToken(SessionInterface $session, string $subject = 'default'): string
     {
         return 'test-csrf-token';
     }
 
-    public static function verifyCsrfToken(string $token): bool
+    public static function verifyCsrfToken($token, SessionInterface $session, string $subject = 'default'): bool
     {
         return self::$verifyResult;
     }

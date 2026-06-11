@@ -19,6 +19,7 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Logging\SystemLogger;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Twig\Environment;
 
 /**
@@ -28,7 +29,8 @@ use Twig\Environment;
  * - Constructor dependency injection
  * - Dispatch method routing actions to handlers
  * - Returning Response objects (never void)
- * - CSRF token validation on POST
+ * - CSRF token validation on POST (the active session is injected, as
+ *   CsrfUtils requires a SessionInterface on OpenEMR 8.1+)
  * - Throwing custom exceptions (never die/exit)
  * - Using Twig for HTML rendering
  */
@@ -38,7 +40,8 @@ class ExampleController
 
     public function __construct(
         private readonly GlobalConfig $config,
-        private readonly Environment $twig
+        private readonly Environment $twig,
+        private readonly SessionInterface $session
     ) {
         $this->logger = new SystemLogger();
     }
@@ -68,7 +71,7 @@ class ExampleController
         $content = $this->twig->render('example/list.html.twig', [
             'title' => 'Module Dashboard',
             'items' => [],
-            'csrf_token' => CsrfUtils::collectCsrfToken(),
+            'csrf_token' => CsrfUtils::collectCsrfToken($this->session),
             'webroot' => $this->config->getWebroot(),
         ]);
 
@@ -97,7 +100,7 @@ class ExampleController
         $content = $this->twig->render('example/view.html.twig', [
             'title' => 'View Item',
             'item' => ['id' => $id, 'name' => 'Example Item'],
-            'csrf_token' => CsrfUtils::collectCsrfToken(),
+            'csrf_token' => CsrfUtils::collectCsrfToken($this->session),
             'webroot' => $this->config->getWebroot(),
         ]);
 
@@ -113,7 +116,7 @@ class ExampleController
     {
         // Validate CSRF token
         $csrfToken = $params['csrf_token'] ?? '';
-        if (!CsrfUtils::verifyCsrfToken($csrfToken)) {
+        if (!CsrfUtils::verifyCsrfToken($csrfToken, $this->session)) {
             throw new {ModuleName}AccessDeniedException('CSRF token verification failed');
         }
 
