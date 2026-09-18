@@ -107,6 +107,7 @@ OpenEMR modules follow a **Symfony-inspired MVC architecture** with:
 │   ├── EnvironmentConfigAccessor.php # Env var config (for containers)
 │   ├── FileConfigAccessor.php       # YAML file config (for K8s)
 │   ├── GlobalsAccessor.php          # Database-backed config (OpenEMR globals)
+│   ├── SecretManagerAccessor.php    # GCP Secret Manager (for GKE)
 │   ├── GlobalConfig.php             # Centralized configuration wrapper
 │   ├── YamlConfigLoader.php         # YAML file parsing and merging
 │   ├── ModuleAccessGuard.php        # Entry point access guard
@@ -200,7 +201,7 @@ Release Please uses the [generic updater](https://github.com/googleapis/release-
 
 ## Configuration Abstraction Layer
 
-The template includes a flexible configuration system that supports database-backed globals, environment variables, and YAML file-based configuration:
+The template includes a flexible configuration system that supports database-backed globals, environment variables, YAML file-based configuration, and Google Secret Manager:
 
 ### Key Components
 
@@ -210,9 +211,18 @@ The template includes a flexible configuration system that supports database-bac
 | `GlobalsAccessor` | Reads config from OpenEMR database globals |
 | `EnvironmentConfigAccessor` | Reads config from environment variables |
 | `FileConfigAccessor` | Reads config from YAML files with env var overrides |
+| `SecretManagerAccessor` | Reads secrets from GCP Secret Manager (GKE) |
 | `YamlConfigLoader` | Parses YAML config files, processes imports, merges |
 | `ConfigFactory` | Selects the appropriate accessor based on environment |
 | `GlobalConfig` | Centralized wrapper providing typed access to all module config |
+
+### Config Mode Precedence
+
+ConfigFactory selects the accessor in this order:
+1. **GSM** - `OCE_TENANT_GCP_PROJECT_ID` is set (GKE with Workload Identity)
+2. **File** - YAML config files exist at conventional paths
+3. **Env** - `{VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1`
+4. **Database** - OpenEMR globals (default)
 
 ### Usage Pattern
 
@@ -224,6 +234,34 @@ $config = new GlobalConfig($configAccessor);
 // Use typed getters
 $isEnabled = $config->isEnabled();      // bool
 $apiKey = $config->getApiKey();         // string (decrypted in DB mode)
+```
+
+### Google Secret Manager Mode (GKE)
+
+When `OCE_TENANT_GCP_PROJECT_ID` is set, secrets are fetched from GCP Secret Manager using Workload Identity. Non-secret config is still read from OpenEMR globals (database).
+
+**Required env vars:**
+- `OCE_TENANT_GCP_PROJECT_ID` - GCP project containing the secrets
+- `OCE_TENANT_ID` - Tenant slug for secret name construction
+
+**Secret naming convention:** `{tenant_id}_{modulename}_{SECRET_NAME}`
+
+**Setup in `SecretManagerAccessor::SECRET_MAP`:**
+```php
+private const SECRET_MAP = [
+    GlobalConfig::CONFIG_OPTION_API_KEY => 'API_KEY',
+    GlobalConfig::CONFIG_OPTION_API_SECRET => 'API_SECRET',
+];
+```
+
+**Terraform (tfm-oce-tenant):**
+```hcl
+module_secrets = {
+  {modulename} = {
+    enabled = true
+    secrets = ["API_KEY", "API_SECRET"]
+  }
+}
 ```
 
 ### Environment Variable Mode

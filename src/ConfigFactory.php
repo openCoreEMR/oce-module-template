@@ -15,16 +15,24 @@ namespace OpenCoreEMR\Modules\{ModuleName};
 /**
  * Factory for creating the appropriate configuration accessor.
  *
- * Supports three modes (checked in order of precedence):
- * 1. File config: YAML files at conventional or overridden paths
- * 2. Env config: {VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1
- * 3. Database globals (default)
+ * Supports four modes (checked in order of precedence):
+ * 1. GSM config: OCE_TENANT_GCP_PROJECT_ID is set (GKE with Secret Manager)
+ * 2. File config: YAML files at conventional or overridden paths
+ * 3. Env config: {VENDOR_PREFIX}_{MODULENAME}_ENV_CONFIG=1
+ * 4. Database globals (default)
  *
- * This pattern allows modules to be configured via YAML files (Kubernetes),
- * environment variables (containers), or database (traditional OpenEMR).
+ * This pattern allows modules to be configured via Google Secret Manager (GKE),
+ * YAML files (Kubernetes), environment variables (containers), or database
+ * (traditional OpenEMR).
  */
 class ConfigFactory
 {
+    /**
+     * Environment variable indicating GKE deployment with GSM secrets.
+     * When set, secrets are fetched from Google Secret Manager.
+     */
+    public const GSM_PROJECT_VAR = 'OCE_TENANT_GCP_PROJECT_ID';
+
     /**
      * Environment variable that toggles environment-based configuration.
      * Set to "1" or "true" to enable environment variable configuration mode.
@@ -77,20 +85,32 @@ class ConfigFactory
     }
 
     /**
-     * Check if any external config mode is active (file or env)
+     * Check if Google Secret Manager mode is enabled (GKE deployment)
+     */
+    public static function isSecretManagerMode(): bool
+    {
+        return getenv(self::GSM_PROJECT_VAR) !== false;
+    }
+
+    /**
+     * Check if any external config mode is active (GSM, file, or env)
      */
     public static function isExternalConfigMode(): bool
     {
-        return self::isFileConfigMode() || self::isEnvConfigMode();
+        return self::isSecretManagerMode() || self::isFileConfigMode() || self::isEnvConfigMode();
     }
 
     /**
      * Create the appropriate config accessor based on environment
      *
-     * Precedence: file config > env config > database globals
+     * Precedence: GSM > file config > env config > database globals
      */
     public static function createConfigAccessor(): ConfigAccessorInterface
     {
+        if (self::isSecretManagerMode()) {
+            return new SecretManagerAccessor();
+        }
+
         if (self::isFileConfigMode()) {
             $loader = new YamlConfigLoader();
             $paths = $loader->resolveFilePaths(self::getConfigFileCandidates());
