@@ -405,7 +405,7 @@ $eventDispatcher->addListener(MenuEvent::MENU_UPDATE, function (MenuEvent $event
 
 ## Architecture Reference
 
-For detailed architectural patterns and conventions, see `CLAUDE.md`.
+For detailed architectural patterns and conventions, see `AGENTS.md`.
 
 ## Contributing
 
