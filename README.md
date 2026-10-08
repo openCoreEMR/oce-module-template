@@ -9,7 +9,7 @@ This is a template repository for creating OpenEMR modules using OpenCoreEMR's a
 - **Symfony-inspired MVC architecture** with Controllers, Services, and Twig templates
 - **Pre-configured code quality tools** (PHPCS, PHPStan, Rector)
 - **Pre-commit hooks** for automated code quality checks
-- **Comprehensive documentation** for AI agents (see `CLAUDE.md`)
+- **Comprehensive documentation** for AI agents (see `AGENTS.md`)
 - **Modern PHP 8.2+** with strict typing and best practices
 - **Proper dependency management** with Composer
 
@@ -86,7 +86,7 @@ pre-commit install
 
 ### 6. Create Your Module Structure
 
-Follow the structure outlined in `CLAUDE.md`:
+Follow the structure outlined in `AGENTS.md`:
 
 ```
 {vendor-prefix}-module-{modulename}/
@@ -105,7 +105,7 @@ Follow the structure outlined in `CLAUDE.md`:
 
 ### 7. Read the Documentation
 
-- **`CLAUDE.md`** - Comprehensive architectural patterns and conventions for AI agents
+- **`AGENTS.md`** - Comprehensive architectural patterns and conventions for AI agents
 - **`DEVELOPMENT.md`** - Development workflow and guidelines (update this for your module)
 
 ## Key Architectural Principles

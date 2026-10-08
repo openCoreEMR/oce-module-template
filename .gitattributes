@@ -25,6 +25,7 @@
 /.composer-require-checker.json export-ignore
 /.dclintrc.yaml export-ignore
 /.yamlfmt export-ignore
+/AGENTS.md export-ignore
 /CLAUDE.md export-ignore
 /bin/setup export-ignore
 /bin/precommit-template-guard.sh export-ignore

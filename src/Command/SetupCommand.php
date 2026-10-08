@@ -229,7 +229,7 @@ class SetupCommand extends Command
             $rootDir . '/version.php',
             $rootDir . '/README.md',
             $rootDir . '/GETTING_STARTED.md',
-            $rootDir . '/CLAUDE.md',
+            $rootDir . '/AGENTS.md',
             $rootDir . '/phpcs.xml',
             $rootDir . '/openemr.bootstrap.php',
         ];

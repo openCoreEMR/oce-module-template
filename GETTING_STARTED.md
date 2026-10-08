@@ -75,7 +75,7 @@ Files that contain placeholders:
 - `src/GlobalsAccessor.php`
 - `src/YamlConfigLoader.php`
 - `README.md`
-- `CLAUDE.md`
+- `AGENTS.md`
 
 ## Step 4: Set Up Pre-Commit Hooks
 
@@ -108,21 +108,21 @@ Create in `src/Exception/`:
 - `{ModuleName}AccessDeniedException.php` - For 403 errors
 - `{ModuleName}ValidationException.php` - For 400 errors
 
-See `CLAUDE.md` for exception patterns.
+See `AGENTS.md` for exception patterns.
 
 ### 3. Controllers
 
 Create controllers in `src/Controller/`:
 - Example: `{Feature}Controller.php`
 
-See `CLAUDE.md` for controller patterns.
+See `AGENTS.md` for controller patterns.
 
 ### 4. Services
 
 Create services in `src/Service/`:
 - Example: `{Feature}Service.php`
 
-See `CLAUDE.md` for service patterns.
+See `AGENTS.md` for service patterns.
 
 ### 5. Public Entry Points
 
@@ -130,7 +130,7 @@ Create entry points in `public/`:
 - `index.php` - Main entry point
 - `{feature}.php` - Feature-specific entry points
 
-See `CLAUDE.md` for the minimal 25-35 line pattern.
+See `AGENTS.md` for the minimal 25-35 line pattern.
 
 ### 6. Twig Templates
 
@@ -139,7 +139,7 @@ Create templates in `templates/`:
 - `{feature}/view.html.twig`
 - `{feature}/partials/_form.html.twig`
 
-See `CLAUDE.md` for template patterns.
+See `AGENTS.md` for template patterns.
 
 ## Step 6: Test Your Module
 
@@ -166,7 +166,7 @@ git commit -m "Initial module structure"
 
 ## Need Help?
 
-- Read `CLAUDE.md` for comprehensive architectural patterns
+- Read `AGENTS.md` for comprehensive architectural patterns
 - Read `DEVELOPMENT.md` for detailed development workflow
 - Check existing modules for examples
 - Ask on OpenEMR forums or create an issue
