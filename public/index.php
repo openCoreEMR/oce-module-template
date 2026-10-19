@@ -39,7 +39,7 @@ run();
 
 /**
  * Main entry logic. Wrapped in a function so the guard above can use return
- * instead of exit, keeping the template consistent with CLAUDE.md (no exit/die).
+ * instead of exit, keeping the template consistent with AGENTS.md (no exit/die).
  */
 function run(): void
 {
